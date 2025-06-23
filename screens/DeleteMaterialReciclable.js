@@ -13,23 +13,23 @@ import InputText from "../components/InputText.js";
 import MyText from "../components/MyText.js";
 import SingleButton from "../components/SingleButton.js";
 
-const DeleteReto = ({ navigation }) => {
-  const [nombre, setReto] = useState("");
+const DeleteMaterialReciclable = ({ navigation }) => {
+  const [nombreMaterial, setNombreMaterial] = useState("");
 
-  const DeleteReto = async () => {
+  const DeleteMaterial = async () => {
     try {
-      const claveValor = nombre.trim().toLowerCase();
-      const reto = await AsyncStorage.getItem(claveValor);
+      const claveValor = nombreMaterial.trim().toLowerCase();
+      const material = await AsyncStorage.getItem(claveValor);
 
-      if (reto) {
+      if (material) {
         await AsyncStorage.removeItem(claveValor);
-        alert("Reto eliminado!");
+        alert("Material reciclable eliminado!");
         navigation.navigate("HomeScreen");
       } else {
-        alert("Reto no existe");
+        alert("Material reciclable no existe");
       }
     } catch (error) {
-      Alert.alert("Error al eliminar el reto");
+      Alert.alert("Error al eliminar el material reciclable");
       console.error(error);
     }
   };
@@ -39,13 +39,19 @@ const DeleteReto = ({ navigation }) => {
       <View style={styles.viewContainer}>
         <View style={styles.generalView}>
           <ScrollView>
-            <MyText text="Buscar reto a eliminar" style={styles.text}></MyText>
+            <MyText
+              text="Buscar material reciclable a eliminar"
+              style={styles.text}
+            ></MyText>
             <KeyboardAvoidingView style={styles.keyboardView}>
               <InputText
-                placeholder="Nombre del Reto"
-                onChangeText={(text) => setReto(text)}
+                placeholder="Nombre del material reciclable"
+                onChangeText={(text) => setNombreMaterial(text)}
               />
-              <SingleButton title="Borrar Reto" customPress={DeleteReto} />
+              <SingleButton
+                title="Borrar Material"
+                customPress={DeleteMaterial}
+              />
             </KeyboardAvoidingView>
           </ScrollView>
         </View>
@@ -54,7 +60,7 @@ const DeleteReto = ({ navigation }) => {
   );
 };
 
-export default DeleteReto;
+export default DeleteMaterialReciclable;
 
 const styles = StyleSheet.create({
   container: {

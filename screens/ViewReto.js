@@ -24,7 +24,8 @@ const ViewReto = ({ navigation }) => {
     }
 
     try {
-      const reto = await AsyncStorage.getItem(nombre);
+      const claveValor = nombre.trim().toLowerCase();
+      const reto = await AsyncStorage.getItem(claveValor);
       if (reto) {
         setRetoData(JSON.parse(reto));
       } else {

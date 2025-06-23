@@ -8,7 +8,7 @@
     "scheme": "obligatoriojm",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "entryPoint": "./App.tsx",              
+    "entryPoint": "./App.tsx",
     "ios": {
       "supportsTablet": true
     },
@@ -34,9 +34,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
-   
-    }
   }
-
+}

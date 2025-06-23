@@ -1,5 +1,6 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import DeleteMaterialReciclable from "../screens/DeleteMaterialReciclable.js";
 import DeleteReto from "../screens/DeleteReto.js";
 import DeleteUser from "../screens/DeleteUser.js";
 import HomeScreen from "../screens/HomeScreen.js";
@@ -12,10 +13,13 @@ import UpdateMaterialReciclable from "../screens/UpdateMaterialReciclable.js";
 import UpdateReto from "../screens/UpdateReto.js";
 import UpdateUser from "../screens/UpdateUser.js";
 import UserMenu from "../screens/UserMenu.js";
+import ViewAllMaterialReciclable from "../screens/ViewAllMaterialReciclable.js";
 import ViewAllRetos from "../screens/ViewAllRetos.js";
 import ViewAllUser from "../screens/ViewAllUser.js";
+import ViewMaterialReciclable from "../screens/ViewMaterialReciclable.js";
 import ViewReto from "../screens/ViewReto.js";
 import ViewUser from "../screens/ViewUser.js";
+
 const Stack = createStackNavigator();
 
 const RootStack = () => {
@@ -113,7 +117,25 @@ const RootStack = () => {
         <Stack.Screen
           name="UpdateMaterialReciclable"
           component={UpdateMaterialReciclable}
-          options={{ title: "Registrar Material Reciclable" }}
+          options={{ title: "Actualizar Material Reciclable" }}
+        />
+
+        <Stack.Screen
+          name="ViewMaterialReciclable"
+          component={ViewMaterialReciclable}
+          options={{ title: "Ver Material Reciclable" }}
+        />
+
+        <Stack.Screen
+          name="DeleteMaterialReciclable"
+          component={DeleteMaterialReciclable}
+          options={{ title: "Eliminar Material Reciclable" }}
+        />
+
+        <Stack.Screen
+          name="ViewAllMaterialReciclable"
+          component={ViewAllMaterialReciclable}
+          options={{ title: "Ver todos los Materiales Reciclables" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

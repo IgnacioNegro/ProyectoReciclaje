@@ -36,9 +36,7 @@ const MaterialesReciclablesMenu = ({ navigation }) => {
             title="Ver todos los Materiales Reciclables"
             btnColor="purple"
             btnIcon="users"
-            customPress={() =>
-              navigation.navigate("ViewAllMaterialesReciclables")
-            }
+            customPress={() => navigation.navigate("ViewAllMaterialReciclable")}
           />
         </ScrollView>
       </View>

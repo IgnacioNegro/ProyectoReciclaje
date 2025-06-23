@@ -1,56 +1,44 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import {
-  Alert,
-  FlatList,
-  Image,
-  SafeAreaView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Alert, FlatList, SafeAreaView, StyleSheet, View } from "react-native";
 import MyText from "../components/MyText.js";
 
-const ViewAllUsers = ({ navigation }) => {
-  const [users, setUsers] = useState([]);
+const ViewAllMaterialReciclable = ({ navigation }) => {
+  const [materiales, setMateriales] = useState([]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchMateriales = async () => {
       try {
         const keys = await AsyncStorage.getAllKeys();
         const result = await AsyncStorage.multiGet(keys);
-        const usersList = result.map((req) => JSON.parse(req[1]));
-        if (usersList.length > 0) {
-          setUsers(usersList);
+        const materialesList = result.map((req) => JSON.parse(req[1]));
+        if (materialesList.length > 0) {
+          setMateriales(materialesList);
         } else {
           Alert.alert(
             "Mensaje",
-            "No hay usuarios!!!",
+            "No hay Materiales Reciclables!!!",
             [{ text: "OK", onPress: () => navigation.navigate("HomeScreen") }],
             { cancelable: false }
           );
         }
       } catch (error) {
         console.error(error);
-        Alert.alert("Error al cargar usuarios!");
+        Alert.alert("Error al cargar materiales reciclables!");
       }
     };
-    fetchUsers();
+    fetchMateriales();
   }, []);
 
   const listItemView = (item) => {
     return (
-      <View key={item.userName} style={styles.listItemView}>
-        {/* Imagen de perfil */}
-        {item.profilePicture ? (
-          <Image
-            source={{ uri: item.profilePicture }}
-            style={styles.profileImage}
-          />
-        ) : null}
-
-        <MyText text={item.userName} style={styles.text} />
-        <MyText text="Email de usuario: " style={styles.text} />
-        <MyText text={item.email} style={styles.text} />
+      <View key={item.materiales} style={styles.listItemView}>
+        <MyText text="Nombre del Material:" style={styles.text} />
+        <MyText text={item.nombre} style={styles.text} />
+        <MyText text="Categoría: " style={styles.text} />
+        <MyText text={item.categoria} style={styles.text} />
+        <MyText text="Imagen: " style={styles.text} />
+        <MyText text={item.imagen} style={styles.text} />
       </View>
     );
   };
@@ -61,23 +49,30 @@ const ViewAllUsers = ({ navigation }) => {
         <View>
           <FlatList
             contentContainerStyle={{ paddingHorizontal: 20 }}
-            data={users}
-            keyExtractor={(item) => item.userName}
+            data={materiales}
+            keyExtractor={(item) => item.nombre}
             renderItem={({ item }) => listItemView(item)}
           />
+
+          <View style={styles.listView}>
+            <MyText
+              text="Total de Materiales Reciclables: "
+              style={styles.text}
+            />
+            <MyText text={materiales.length} style={styles.text} />
+          </View>
         </View>
       </View>
     </SafeAreaView>
   );
 };
 
-export default ViewAllUsers;
+export default ViewAllMaterialReciclable;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-
   viewContainer: {
     flex: 1,
     backgroundColor: "white",
@@ -100,13 +95,5 @@ const styles = StyleSheet.create({
     color: "black",
     alignContent: "center",
     alignItems: "center",
-  },
-
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignSelf: "center",
-    marginBottom: 10,
   },
 });

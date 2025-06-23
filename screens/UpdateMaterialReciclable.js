@@ -25,7 +25,8 @@ const UpdateMaterialReciclable = () => {
     }
 
     try {
-      const materialReciclable = await AsyncStorage.getItem(nombreBusqueda);
+      const claveValor = nombreBusqueda.trim().toLowerCase();
+      const materialReciclable = await AsyncStorage.getItem(claveValor);
       if (materialReciclable) {
         const retoData = JSON.parse(materialReciclable);
         setNombre(retoData.nombre);
@@ -57,7 +58,11 @@ const UpdateMaterialReciclable = () => {
         categoria,
         imagen,
       };
-      await AsyncStorage.setItem(nombre, JSON.stringify(materialReciclable));
+      const claveValor = nombreBusqueda.trim().toLowerCase();
+      await AsyncStorage.setItem(
+        claveValor,
+        JSON.stringify(materialReciclable)
+      );
       Alert.alert("Material actualizado");
     } catch (error) {
       console.error(error);

@@ -1,15 +1,20 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import React, { useState } from "react";
 import {
   Alert,
+  Button,
+  Image,
   KeyboardAvoidingView,
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from "react-native";
 import InputText from "../components/InputText.js";
 import SingleButton from "../components/SingleButton.js";
+
 const RegisterUser = ({ navigation }) => {
   const [userName, setUserName] = useState("");
   const [name, setName] = useState("");
@@ -19,6 +24,43 @@ const RegisterUser = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
 
+  // Función para pedir permisos y elegir imagen de galería
+  const pickFromGallery = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    const gal = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!cam.granted || !gal.granted) {
+      Alert.alert(
+        "Permisos requeridos",
+        "Habilitá acceso a la cámara y la galería."
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setProfilePicture(result.assets[0].uri);
+    }
+  };
+
+  // Función para tomar foto con cámara
+  const takePhoto = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    if (!cam.granted) {
+      Alert.alert("Permisos requeridos", "Habilitá acceso a la cámara.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setProfilePicture(result.assets[0].uri);
+    }
+  };
+
   const clearData = () => {
     setUserName("");
     setPassword("");
@@ -26,6 +68,7 @@ const RegisterUser = ({ navigation }) => {
     setName("");
     setAge("");
     setNeighborhood("");
+    setProfilePicture("");
   };
 
   const registerUser = async () => {
@@ -37,7 +80,7 @@ const RegisterUser = ({ navigation }) => {
       Alert.alert("Ingrese su password");
       return;
     }
-    if (!email.trim() && email.indexOf("@") === -1) {
+    if (!email.trim() || email.indexOf("@") === -1) {
       Alert.alert("Ingrese su email correctamente");
       return;
     }
@@ -73,7 +116,7 @@ const RegisterUser = ({ navigation }) => {
       await AsyncStorage.setItem(userName, JSON.stringify(user));
       clearData();
       Alert.alert(
-        "Exito",
+        "Éxito",
         "Usuario registrado!",
         [
           {
@@ -94,7 +137,7 @@ const RegisterUser = ({ navigation }) => {
       <View style={styles.viewContainer}>
         <View style={styles.generalView}>
           <ScrollView>
-            <KeyboardAvoidingView style={styles.KeyboardAvoidingView}>
+            <KeyboardAvoidingView style={styles.keyboardView}>
               <InputText
                 placeholder="Nombre de Usuario"
                 onChangeText={setUserName}
@@ -117,7 +160,6 @@ const RegisterUser = ({ navigation }) => {
                 style={styles.emailInput}
                 value={email}
               />
-
               <InputText
                 placeholder="Nombre Completo"
                 onChangeText={setName}
@@ -137,12 +179,28 @@ const RegisterUser = ({ navigation }) => {
                 style={styles.nameInput}
                 value={neighborhood}
               />
-              <InputText
-                placeholder="Foto de Perfil (URL)"
-                onChangeText={setProfilePicture}
-                style={styles.nameInput}
-                value={profilePicture}
-              />
+
+              {/* Mostrar imagen seleccionada */}
+              <View style={styles.imagePreview}>
+                {profilePicture ? (
+                  <Image
+                    source={{ uri: profilePicture }}
+                    style={styles.image}
+                  />
+                ) : (
+                  <Text style={styles.placeholder}>
+                    Ninguna imagen seleccionada
+                  </Text>
+                )}
+              </View>
+
+              {/* Botones para subir imagen */}
+              <View style={styles.buttonRow}>
+                <Button title="Elegir de galería" onPress={pickFromGallery} />
+                <View style={{ width: 10 }} />
+                <Button title="Tomar foto" onPress={takePhoto} />
+              </View>
+
               <SingleButton
                 title="Guardar Usuario"
                 customPress={registerUser}
@@ -183,5 +241,26 @@ const styles = StyleSheet.create({
   emailInput: {
     padding: 15,
     textAlignVertical: "top",
+  },
+  imagePreview: {
+    height: 200,
+    marginVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#e0e0e0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
+  },
+  placeholder: {
+    color: "#777",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 20,
   },
 });

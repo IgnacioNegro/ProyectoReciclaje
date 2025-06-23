@@ -28,7 +28,8 @@ const UpdateReto = () => {
     }
 
     try {
-      const reto = await AsyncStorage.getItem(nombreBusqueda);
+      const claveValor = nombreBusqueda.trim().toLowerCase();
+      const reto = await AsyncStorage.getItem(claveValor);
       if (reto) {
         const retoData = JSON.parse(reto);
         setNombre(retoData.nombre);
@@ -67,7 +68,8 @@ const UpdateReto = () => {
         fechaLimite,
         puntajeAsignado,
       };
-      await AsyncStorage.setItem(nombre, JSON.stringify(reto));
+      const claveValor = nombre.trim().toLowerCase();
+      await AsyncStorage.setItem(claveValor, JSON.stringify(reto));
       Alert.alert("Reto actualizado");
     } catch (error) {
       console.error(error);

@@ -12,24 +12,25 @@ import InputText from "../components/InputText";
 import MyText from "../components/MyText";
 import SingleButton from "../components/SingleButton";
 
-const ViewMaterialReciclabl = ({ navigation }) => {
+const ViewMaterialReciclable = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [imagen, setImagen] = useState("");
+  const [materialData, setmaterialData] = useState(null);
 
   const getMaterialData = async () => {
-    setNombre(null);
     if (!nombre.trim()) {
       Alert.alert("El nombre del material es requerido!");
       return;
     }
 
     try {
-      const material = await AsyncStorage.getItem(nombre);
-      if (material) {
-        setUserData(JSON.parse(material));
+      const claveValor = nombre.trim().toLowerCase();
+      const materialData = await AsyncStorage.getItem(claveValor);
+
+      if (materialData) {
+        setmaterialData(JSON.parse(materialData));
       } else {
         Alert.alert("El material no existe");
+        setmaterialData(null);
       }
     } catch (error) {
       console.error(error);
@@ -50,12 +51,13 @@ const ViewMaterialReciclabl = ({ navigation }) => {
               <InputText
                 style={styles.inputStyle}
                 placeholder="Nombre del material a buscar"
-                onChangeText={(text) => setUserName(text)}
+                onChangeText={(text) => setNombre(text)}
               />
+
               <SingleButton title="Buscar" customPress={getMaterialData} />
               <View style={styles.presenterView}>
                 <MyText
-                  text={`Nombre: ${!getMaterialData ? "" : material.nombre}`}
+                  text={`Nombre: ${!materialData ? "" : materialData.nombre}`}
                   style={styles.presenterText}
                 />
               </View>
@@ -67,7 +69,7 @@ const ViewMaterialReciclabl = ({ navigation }) => {
   );
 };
 
-export default ViewMaterialReciclabl;
+export default ViewMaterialReciclable;
 
 const styles = StyleSheet.create({
   container: {
