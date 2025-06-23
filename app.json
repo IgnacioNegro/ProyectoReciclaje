@@ -8,23 +8,24 @@
     "scheme": "obligatoriojm",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "entryPoint": "./App.tsx",              
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "minSdkVersion": 19,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.ObligatorioJM"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
       [
         "expo-splash-screen",
         {
@@ -34,9 +35,8 @@
           "backgroundColor": "#ffffff"
         }
       ]
-    ],
-    "experiments": {
-      "typedRoutes": true
+    ]
+   
     }
   }
-}
+
