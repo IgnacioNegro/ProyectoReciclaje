@@ -8,32 +8,41 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import InputText from "../components/InputText";
-import MyText from "../components/MyText";
-import SingleButton from "../components/SingleButton";
+import InputText from "../../components/InputText";
+import MyText from "../../components/MyText";
+import SingleButton from "../../components/SingleButton";
 
-const ViewReto = ({ navigation }) => {
-  const [nombre, setReto] = useState("");
-  const [retoData, setRetoData] = useState(null);
+const ViewUser = ({ navigation }) => {
+  const [userName, setUserName] = useState("");
+  const [usuariosArray, setUserData] = useState(null);
 
-  const getRetoData = async () => {
-    setRetoData(null);
-    if (!nombre.trim()) {
-      Alert.alert("El nombre del Reto es requerido!");
+  const getUserData = async () => {
+    console.log("getUserData");
+
+    setUserData(null);
+    if (!userName.trim()) {
+      Alert.alert("El nombre de usuario es requerido!");
       return;
     }
 
     try {
-      const claveValor = nombre.trim().toLowerCase();
-      const reto = await AsyncStorage.getItem(claveValor);
-      if (reto) {
-        setRetoData(JSON.parse(reto));
+      const data = await AsyncStorage.getItem("usuarios");
+      if (data) {
+        const usuarios = JSON.parse(data);
+        const usuarioEncontrado = usuarios.find(
+          (u) => u.userName.toLowerCase() === userName.toLowerCase()
+        );
+        if (usuarioEncontrado) {
+          setUserData(usuarioEncontrado);
+        } else {
+          Alert.alert("El usuario no existe");
+        }
       } else {
-        Alert.alert("El reto no existe");
+        Alert.alert("No hay usuarios registrados");
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error al buscar reto");
+      Alert.alert("Error al buscar usuario");
     }
   };
 
@@ -43,16 +52,16 @@ const ViewReto = ({ navigation }) => {
         <View style={styles.generalView}>
           <ScrollView>
             <KeyboardAvoidingView style={styles.keyboardView}>
-              <MyText text="Filtro de retos" style={styles.text} />
+              <MyText text="Filtro de usuario" style={styles.text} />
               <InputText
                 style={styles.inputStyle}
-                placeholder="Nombre del Reto a buscar"
-                onChangeText={(text) => setReto(text)}
+                placeholder="Nombre de usuario a buscar"
+                onChangeText={(text) => setUserName(text)}
               />
-              <SingleButton title="Buscar" customPress={getRetoData} />
+              <SingleButton title="Buscar" customPress={getUserData} />
               <View style={styles.presenterView}>
                 <MyText
-                  text={`Nombre: ${!retoData ? "" : retoData.nombre}`}
+                  text={`Email: ${!usuariosArray ? "" : usuariosArray.email}`}
                   style={styles.presenterText}
                 />
               </View>
@@ -64,7 +73,7 @@ const ViewReto = ({ navigation }) => {
   );
 };
 
-export default ViewReto;
+export default ViewUser;
 
 const styles = StyleSheet.create({
   container: {

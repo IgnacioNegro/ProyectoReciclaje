@@ -12,8 +12,8 @@ import {
   Text,
   View,
 } from "react-native";
-import InputText from "../components/InputText.js";
-import SingleButton from "../components/SingleButton.js";
+import InputText from "../../components/InputText";
+import SingleButton from "../../components/SingleButton.js";
 
 const RegisterUser = ({ navigation }) => {
   const [userName, setUserName] = useState("");
@@ -84,7 +84,6 @@ const RegisterUser = ({ navigation }) => {
       Alert.alert("Ingrese su email correctamente");
       return;
     }
-
     if (!name.trim()) {
       Alert.alert("Ingrese su nombre");
       return;
@@ -103,7 +102,7 @@ const RegisterUser = ({ navigation }) => {
     }
 
     try {
-      const user = {
+      const nuevoUsuario = {
         userName,
         password,
         email,
@@ -111,9 +110,26 @@ const RegisterUser = ({ navigation }) => {
         age,
         neighborhood,
         profilePicture,
+        retosParticipados: [], // Prepara el array para guardar retos después
       };
 
-      await AsyncStorage.setItem(userName, JSON.stringify(user));
+      // Traer la lista de usuarios actual
+      const data = await AsyncStorage.getItem("usuarios");
+      const usuarios = data ? JSON.parse(data) : [];
+
+      // Validar que no exista el mismo userName
+      const yaExiste = usuarios.some(
+        (usuario) => usuario.userName.toLowerCase() === userName.toLowerCase()
+      );
+
+      if (yaExiste) {
+        Alert.alert("Ese nombre de usuario ya está registrado");
+        return;
+      }
+
+      usuarios.push(nuevoUsuario);
+      await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
+
       clearData();
       Alert.alert(
         "Éxito",
@@ -121,13 +137,13 @@ const RegisterUser = ({ navigation }) => {
         [
           {
             text: "Confirmar",
-            onPress: () => navigation.navigate("HomeScreen"),
+            onPress: () => navigation.navigate("Login"),
           },
         ],
         { cancelable: false }
       );
     } catch (error) {
-      console.error(error);
+      console.error("Error al registrar usuario:", error);
       Alert.alert("Error al registrar usuario.");
     }
   };

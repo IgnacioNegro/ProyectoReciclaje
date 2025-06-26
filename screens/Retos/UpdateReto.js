@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, SafeAreaView, StyleSheet, View } from "react-native";
-import MyText from "../components/MyText.js";
+import MyText from "../../components/MyText.js";
 
 const ViewAllRetos = ({ navigation }) => {
   const [retos, setRetos] = useState([]);
@@ -9,9 +9,9 @@ const ViewAllRetos = ({ navigation }) => {
   useEffect(() => {
     const fetchRetos = async () => {
       try {
-        const keys = await AsyncStorage.getAllKeys();
-        const result = await AsyncStorage.multiGet(keys);
-        const retosList = result.map((req) => JSON.parse(req[1]));
+        const data = await AsyncStorage.getItem("retos");
+        const retosList = data ? JSON.parse(data) : [];
+
         if (retosList.length > 0) {
           setRetos(retosList);
         } else {
@@ -32,7 +32,7 @@ const ViewAllRetos = ({ navigation }) => {
 
   const listItemView = (item) => {
     return (
-      <View key={item.retos} style={styles.listItemView}>
+      <View key={item.nombre} style={styles.listItemView}>
         <MyText text="Nombre del Reto: " style={styles.text} />
         <MyText text={item.nombre} style={styles.text} />
         <MyText text="Descripción: " style={styles.text} />
@@ -50,15 +50,19 @@ const ViewAllRetos = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View>
-        <View>
-          <FlatList
-            contentContainerStyle={{ paddingHorizontal: 20 }}
-            data={retos}
-            keyExtractor={(item) => item.nombre}
-            renderItem={({ item }) => listItemView(item)}
-          />
-        </View>
+      <View style={styles.viewContainer}>
+        <FlatList
+          contentContainerStyle={{ paddingHorizontal: 20 }}
+          data={retos}
+          keyExtractor={(item) => item.nombre}
+          renderItem={({ item }) => listItemView(item)}
+          ListEmptyComponent={
+            <MyText
+              text="No hay retos para mostrar."
+              style={{ textAlign: "center", marginTop: 20 }}
+            />
+          }
+        />
       </View>
     </SafeAreaView>
   );
@@ -74,12 +78,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
   },
-  generalView: {
-    flex: 1,
-  },
-  listView: {
-    marginTop: 20,
-  },
   listItemView: {
     backgroundColor: "white",
     margin: 5,
@@ -90,7 +88,5 @@ const styles = StyleSheet.create({
     padding: 5,
     marginLeft: 10,
     color: "black",
-    alignContent: "center",
-    alignItems: "center",
   },
 });

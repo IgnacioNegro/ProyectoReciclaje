@@ -4,7 +4,7 @@ import Icon from "react-native-vector-icons/FontAwesome";
 const Button = (props) => {
   return (
     <TouchableOpacity
-      style={[styles.button, { backgroundColor: props.btnColor }]}
+      style={[styles.button, { backgroundColor: props.btnColor }, props.style]} // agregar props.style acá
       onPress={props.customPress}
     >
       <View style={styles.view}>
@@ -24,13 +24,11 @@ export default Button;
 
 const styles = StyleSheet.create({
   view: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
   button: {
-    flex: 1,
-    color: "white",
+    // quitamos flex: 1 para que no llene todo el contenedor
     padding: 10,
     marginTop: 15,
     marginLeft: 35,

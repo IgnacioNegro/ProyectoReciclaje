@@ -1,5 +1,5 @@
 import { SafeAreaView, ScrollView, StyleSheet, View } from "react-native";
-import Button from "../components/Button.js";
+import Button from "../../components/Button.js";
 
 const UserMenu = ({ navigation }) => {
   return (

@@ -2,19 +2,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
 } from "react-native";
-import InputText from "../components/InputText";
-import MyText from "../components/MyText";
-import SingleButton from "../components/SingleButton";
+import InputText from "../../components/InputText";
+import MyText from "../../components/MyText";
+import SingleButton from "../../components/SingleButton";
 
 const ViewMaterialReciclable = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
-  const [materialData, setmaterialData] = useState(null);
+  const [materialData, setMaterialData] = useState(null);
 
   const getMaterialData = async () => {
     if (!nombre.trim()) {
@@ -23,14 +24,19 @@ const ViewMaterialReciclable = ({ navigation }) => {
     }
 
     try {
-      const claveValor = nombre.trim().toLowerCase();
-      const materialData = await AsyncStorage.getItem(claveValor);
+      const data = await AsyncStorage.getItem("materiales");
+      const materiales = data ? JSON.parse(data) : [];
 
-      if (materialData) {
-        setmaterialData(JSON.parse(materialData));
+      // Buscar material por nombre (ignorando mayúsculas/minúsculas)
+      const material = materiales.find(
+        (mat) => mat.nombre.toLowerCase() === nombre.trim().toLowerCase()
+      );
+
+      if (material) {
+        setMaterialData(material);
       } else {
         Alert.alert("El material no existe");
-        setmaterialData(null);
+        setMaterialData(null);
       }
     } catch (error) {
       console.error(error);
@@ -52,14 +58,29 @@ const ViewMaterialReciclable = ({ navigation }) => {
                 style={styles.inputStyle}
                 placeholder="Nombre del material a buscar"
                 onChangeText={(text) => setNombre(text)}
+                value={nombre}
               />
 
               <SingleButton title="Buscar" customPress={getMaterialData} />
+
               <View style={styles.presenterView}>
                 <MyText
                   text={`Nombre: ${!materialData ? "" : materialData.nombre}`}
                   style={styles.presenterText}
                 />
+                <MyText
+                  text={`Categoría: ${
+                    !materialData ? "" : materialData.categoria
+                  }`}
+                  style={styles.presenterText}
+                />
+                {materialData && materialData.imagen ? (
+                  <Image
+                    source={{ uri: materialData.imagen }}
+                    style={styles.imageStyle}
+                    resizeMode="contain"
+                  />
+                ) : null}
               </View>
             </KeyboardAvoidingView>
           </ScrollView>
@@ -97,9 +118,17 @@ const styles = StyleSheet.create({
     marginLeft: 30,
     marginRight: 30,
     marginTop: 15,
-    fontSize: 30,
   },
   presenterText: {
     fontSize: 20,
+    marginBottom: 10,
+  },
+  imageStyle: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+  },
+  keyboardView: {
+    flex: 1,
   },
 });

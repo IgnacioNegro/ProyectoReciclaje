@@ -9,25 +9,47 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import InputText from "../components/InputText.js";
-import MyText from "../components/MyText.js";
-import SingleButton from "../components/SingleButton.js";
+import InputText from "../../components/InputText.js";
+import MyText from "../../components/MyText.js";
+import SingleButton from "../../components/SingleButton.js";
 
 const DeleteMaterialReciclable = ({ navigation }) => {
   const [nombreMaterial, setNombreMaterial] = useState("");
 
-  const DeleteMaterial = async () => {
+  const deleteMaterial = async () => {
     try {
       const claveValor = nombreMaterial.trim().toLowerCase();
-      const material = await AsyncStorage.getItem(claveValor);
 
-      if (material) {
-        await AsyncStorage.removeItem(claveValor);
-        alert("Material reciclable eliminado!");
-        navigation.navigate("HomeScreen");
-      } else {
-        alert("Material reciclable no existe");
+      if (!claveValor) {
+        Alert.alert(
+          "Error",
+          "Por favor ingresa el nombre del material reciclable"
+        );
+        return;
       }
+
+      // Obtener el array de materiales
+      const data = await AsyncStorage.getItem("materiales");
+      let materiales = data ? JSON.parse(data) : [];
+
+      // Buscar índice del material a eliminar
+      const index = materiales.findIndex(
+        (mat) => mat.nombre.toLowerCase() === claveValor
+      );
+
+      if (index === -1) {
+        Alert.alert("Error", "Material reciclable no existe");
+        return;
+      }
+
+      // Eliminar material del array
+      materiales.splice(index, 1);
+
+      // Guardar el array actualizado
+      await AsyncStorage.setItem("materiales", JSON.stringify(materiales));
+
+      Alert.alert("Éxito", "Material reciclable eliminado!");
+      navigation.navigate("HomeScreen");
     } catch (error) {
       Alert.alert("Error al eliminar el material reciclable");
       console.error(error);
@@ -42,15 +64,16 @@ const DeleteMaterialReciclable = ({ navigation }) => {
             <MyText
               text="Buscar material reciclable a eliminar"
               style={styles.text}
-            ></MyText>
+            />
             <KeyboardAvoidingView style={styles.keyboardView}>
               <InputText
                 placeholder="Nombre del material reciclable"
                 onChangeText={(text) => setNombreMaterial(text)}
+                value={nombreMaterial}
               />
               <SingleButton
                 title="Borrar Material"
-                customPress={DeleteMaterial}
+                customPress={deleteMaterial}
               />
             </KeyboardAvoidingView>
           </ScrollView>

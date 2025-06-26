@@ -9,8 +9,8 @@ import {
   Text,
   View,
 } from "react-native";
-import InputText from "../components/InputText.js";
-import SingleButton from "../components/SingleButton.js";
+import InputText from "../../components/InputText.js";
+import SingleButton from "../../components/SingleButton.js";
 
 const RegisterMaterialReciclable = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
@@ -23,27 +23,42 @@ const RegisterMaterialReciclable = ({ navigation }) => {
     setImagen("");
   };
 
-  const RegisterMaterialReciclable = async () => {
-    if (!nombre || !categoria || !imagen) {
+  const registerMaterialReciclable = async () => {
+    if (!nombre.trim() || !categoria.trim() || !imagen.trim()) {
       Alert.alert("Error", "Por favor completa todos los campos");
       return;
     }
 
     try {
-      const materialReciclable = {
-        nombre,
-        categoria,
-        imagen,
+      const nuevoMaterial = {
+        nombre: nombre.trim(),
+        categoria: categoria.trim(),
+        imagen: imagen.trim(),
       };
 
-      await AsyncStorage.setItem(
-        nombre.trim().toLowerCase(),
-        JSON.stringify(materialReciclable)
+      // Obtener la lista actual o crear una vacía
+      const data = await AsyncStorage.getItem("materiales");
+      const materiales = data ? JSON.parse(data) : [];
+
+      // Verificar que no exista un material con el mismo nombre (único)
+      const existe = materiales.some(
+        (mat) => mat.nombre.toLowerCase() === nuevoMaterial.nombre.toLowerCase()
       );
+
+      if (existe) {
+        Alert.alert("Error", "Ya existe un material con ese nombre");
+        return;
+      }
+
+      // Agregar nuevo material y guardar
+      materiales.push(nuevoMaterial);
+      await AsyncStorage.setItem("materiales", JSON.stringify(materiales));
+
       clearData();
       Alert.alert("Éxito", "Material Reciclable registrado correctamente");
       navigation.goBack();
     } catch (error) {
+      console.error(error);
       Alert.alert("Error", "No se pudo registrar el Material Reciclable");
     }
   };
@@ -64,21 +79,19 @@ const RegisterMaterialReciclable = ({ navigation }) => {
                 />
                 <InputText
                   style={styles.input}
-                  placeholder="Categoria"
+                  placeholder="Categoría"
                   value={categoria}
                   onChangeText={setCategoria}
                 />
-
                 <InputText
                   style={styles.input}
                   placeholder="URL de la Imagen"
                   value={imagen}
                   onChangeText={setImagen}
                 />
-
                 <SingleButton
                   title="Guardar Material Reciclable"
-                  customPress={RegisterMaterialReciclable}
+                  customPress={registerMaterialReciclable}
                 />
               </View>
             </KeyboardAvoidingView>

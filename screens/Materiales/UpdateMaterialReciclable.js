@@ -8,9 +8,9 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import InputText from "../components/InputText.js";
-import MyText from "../components/MyText.js";
-import SingleButton from "../components/SingleButton.js";
+import InputText from "../../components/InputText.js";
+import MyText from "../../components/MyText.js";
+import SingleButton from "../../components/SingleButton.js";
 
 const UpdateMaterialReciclable = () => {
   const [nombreBusqueda, setNombreBusqueda] = useState("");
@@ -26,12 +26,18 @@ const UpdateMaterialReciclable = () => {
 
     try {
       const claveValor = nombreBusqueda.trim().toLowerCase();
-      const materialReciclable = await AsyncStorage.getItem(claveValor);
-      if (materialReciclable) {
-        const retoData = JSON.parse(materialReciclable);
-        setNombre(retoData.nombre);
-        setCategoria(retoData.categoria);
-        setImagen(retoData.imagen);
+
+      const data = await AsyncStorage.getItem("materiales");
+      const materiales = data ? JSON.parse(data) : [];
+
+      const materialEncontrado = materiales.find(
+        (mat) => mat.nombre.toLowerCase() === claveValor
+      );
+
+      if (materialEncontrado) {
+        setNombre(materialEncontrado.nombre);
+        setCategoria(materialEncontrado.categoria);
+        setImagen(materialEncontrado.imagen);
       } else {
         Alert.alert("Material Reciclable no encontrado!");
       }
@@ -41,7 +47,7 @@ const UpdateMaterialReciclable = () => {
     }
   };
 
-  const UpdateMaterialReciclable = async () => {
+  const updateMaterialReciclable = async () => {
     if (
       !nombre.trim() ||
       !categoria.trim() ||
@@ -53,17 +59,30 @@ const UpdateMaterialReciclable = () => {
     }
 
     try {
-      const materialReciclable = {
+      const claveValor = nombreBusqueda.trim().toLowerCase();
+
+      const data = await AsyncStorage.getItem("materiales");
+      let materiales = data ? JSON.parse(data) : [];
+
+      const index = materiales.findIndex(
+        (mat) => mat.nombre.toLowerCase() === claveValor
+      );
+
+      if (index === -1) {
+        Alert.alert("Material no encontrado para actualizar");
+        return;
+      }
+
+      // Actualizar el material en la posición encontrada
+      materiales[index] = {
         nombre,
         categoria,
         imagen,
       };
-      const claveValor = nombreBusqueda.trim().toLowerCase();
-      await AsyncStorage.setItem(
-        claveValor,
-        JSON.stringify(materialReciclable)
-      );
-      Alert.alert("Material actualizado");
+
+      await AsyncStorage.setItem("materiales", JSON.stringify(materiales));
+
+      Alert.alert("Material actualizado con éxito");
     } catch (error) {
       console.error(error);
       Alert.alert("Error al actualizar el material.");
@@ -81,6 +100,7 @@ const UpdateMaterialReciclable = () => {
                 placeholder="Ingrese el nombre del material reciclable a buscar"
                 style={styles.inputStyle}
                 onChangeText={(text) => setNombreBusqueda(text)}
+                value={nombreBusqueda}
               />
 
               <SingleButton
@@ -100,7 +120,7 @@ const UpdateMaterialReciclable = () => {
               />
               <SingleButton
                 title="Actualizar"
-                customPress={UpdateMaterialReciclable}
+                customPress={updateMaterialReciclable}
               />
             </KeyboardAvoidingView>
           </ScrollView>

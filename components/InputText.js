@@ -16,7 +16,7 @@ const InputText = (props) => {
         numberOfLines={props.numberOfLines}
         multiline={props.multiline}
         onSubmitEditing={props.onSubmitEditing}
-        style={styles.input}
+        style={[styles.input, props.style]} // <-- Aquí combinamos estilos
         blurOnSubmit={false}
         value={props.value}
         defaultValue={props.defaultValue}
@@ -37,5 +37,8 @@ const styles = StyleSheet.create({
     borderColor: "#d3d3d3",
     borderWidth: 1,
     padding: 15,
+  },
+  input: {
+    color: "black", // Color default (puede ser cualquiera)
   },
 });

@@ -8,7 +8,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import MyText from "../components/MyText.js";
+import MyText from "../../components/MyText.js";
 
 const ViewAllUsers = ({ navigation }) => {
   const [users, setUsers] = useState([]);
@@ -16,11 +16,11 @@ const ViewAllUsers = ({ navigation }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const keys = await AsyncStorage.getAllKeys();
-        const result = await AsyncStorage.multiGet(keys);
-        const usersList = result.map((req) => JSON.parse(req[1]));
-        if (usersList.length > 0) {
-          setUsers(usersList);
+        const usuarios = await AsyncStorage.getItem("usuarios");
+        const parsedUsuarios = usuarios ? JSON.parse(usuarios) : [];
+        console.log("usuarios", parsedUsuarios);
+        if (parsedUsuarios.length > 0) {
+          setUsers(parsedUsuarios);
         } else {
           Alert.alert(
             "Mensaje",
