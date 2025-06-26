@@ -1,7 +1,9 @@
+import { Montserrat_400Regular, useFonts } from "@expo-google-fonts/montserrat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -12,10 +14,18 @@ import {
 } from "react-native";
 import InputText from "../components/InputText";
 import SingleButton from "../components/SingleButton";
+import AuthLoading from "./AuthLoading";
 
 const Login = ({ navigation }) => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
+  let [fontsLoaded] = useFonts({
+    Montserrat_400Regular,
+  });
+
+  if (!fontsLoaded) {
+    return <AuthLoading />;
+  }
 
   const handleLogin = async () => {
     if (!userName.trim() || !password.trim()) {
@@ -54,12 +64,22 @@ const Login = ({ navigation }) => {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.inner}
         >
-          <Text style={styles.title}>Iniciar Sesión</Text>
+          <Image
+            source={{
+              uri: "https://i.postimg.cc/9MdV61yg/3f19797d-b70f-4177-adc3-48735ccd6c9f-removebg-preview.png",
+            }}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={[styles.title, { fontFamily: "Montserrat_400Regular" }]}>
+            Planeta Vivo
+          </Text>
+
           <InputText
             placeholder="Nombre de Usuario"
             value={userName}
             onChangeText={setUserName}
-            style={{ color: "white" }} // Aquí cambiamos el color de la letra
+            style={{ color: "white" }}
           />
 
           <InputText
@@ -67,7 +87,7 @@ const Login = ({ navigation }) => {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
-            style={{ color: "white" }} // Aquí también
+            style={{ color: "white" }}
           />
           <SingleButton title="Iniciar Sesión" customPress={handleLogin} />
           <View style={{ marginTop: 20 }}>
@@ -96,6 +116,12 @@ const styles = StyleSheet.create({
   inner: {
     padding: 20,
     justifyContent: "center",
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    alignSelf: "center",
+    marginBottom: 20,
   },
   title: {
     color: "white",
