@@ -36,6 +36,12 @@ const UserMenu = ({ navigation }) => {
             btnIcon="users"
             customPress={() => navigation.navigate("ViewAllUsers")}
           />
+          <Button
+            title="Panel de Usuario"
+            btnColor="cyan"
+            btnIcon="user-shield"
+            customPress={() => navigation.navigate("UserPanel")}
+          />
         </ScrollView>
       </View>
     </SafeAreaView>

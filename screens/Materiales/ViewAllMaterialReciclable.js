@@ -4,6 +4,7 @@ import {
   Alert,
   Button,
   FlatList,
+  Image,
   SafeAreaView,
   StyleSheet,
   View,
@@ -12,6 +13,7 @@ import MyText from "../../components/MyText.js";
 
 const ViewAllMaterialReciclable = ({ navigation }) => {
   const [materiales, setMateriales] = useState([]);
+  const [imagen, setImagenes] = useState([]);
 
   useEffect(() => {
     const fetchMateriales = async () => {
@@ -64,13 +66,19 @@ const ViewAllMaterialReciclable = ({ navigation }) => {
 
   const listItemView = (item) => {
     return (
-      <View key={item.nombre} style={styles.listItemView}>
-        <MyText text="Nombre del Material:" style={styles.text} />
-        <MyText text={item.nombre} style={styles.text} />
-        <MyText text="Categoría: " style={styles.text} />
-        <MyText text={item.categoria} style={styles.text} />
-        <MyText text="Imagen: " style={styles.text} />
-        <MyText text={item.imagen} style={styles.text} />
+      <View key={item.nombre} style={styles.card}>
+        <Image source={{ uri: item.imagen }} style={styles.cardImage} />
+
+        <View style={styles.cardContent}>
+          <MyText
+            text={`📦 Material: ${item.nombre}`}
+            style={styles.cardText}
+          />
+          <MyText
+            text={`📁 Categoría: ${item.categoria}`}
+            style={styles.cardText}
+          />
+        </View>
       </View>
     );
   };
@@ -114,17 +122,36 @@ const ViewAllMaterialReciclable = ({ navigation }) => {
 export default ViewAllMaterialReciclable;
 
 const styles = StyleSheet.create({
+  card: {
+    backgroundColor: "#f9f9f9",
+    marginVertical: 10,
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
+  cardImage: {
+    width: "100%",
+    height: 200,
+    resizeMode: "cover",
+  },
+
+  cardContent: {
+    padding: 10,
+  },
+
+  cardText: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: "#333",
+  },
   container: {
     flex: 1,
-  },
-  listView: {
-    marginTop: 20,
-  },
-  listItemView: {
-    backgroundColor: "white",
-    margin: 5,
-    padding: 10,
-    borderRadius: 10,
+    backgroundColor: "#fff",
   },
   text: {
     padding: 5,

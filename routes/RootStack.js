@@ -11,11 +11,13 @@ import DeleteUser from "../screens/User/DeleteUser";
 import RegisterUser from "../screens/User/RegisterUser";
 import UpdateUser from "../screens/User/UpdateUser";
 import UserMenu from "../screens/User/UserMenu";
+import UserPanel from "../screens/User/UserPanel.js";
 import ViewAllUser from "../screens/User/ViewAllUser";
 import ViewUser from "../screens/User/ViewUser";
 
 // Retos
 import DeleteReto from "../screens/Retos/DeleteReto";
+import ParticiparReto from "../screens/Retos/ParticiparReto";
 import RegisterReto from "../screens/Retos/RegisterReto";
 import RetosMenu from "../screens/Retos/RetosMenu";
 import UpdateReto from "../screens/Retos/UpdateReto";
@@ -35,7 +37,18 @@ const Stack = createStackNavigator();
 const RootStack = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="AuthLoading">
+      <Stack.Navigator
+        initialRouteName="AuthLoading"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: "#121212", // fondo negro
+          },
+          headerTintColor: "#ffffff", // texto blanco
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+        }}
+      >
         {/* Pantalla de carga para chequear si está logueado */}
         <Stack.Screen
           name="AuthLoading"
@@ -54,7 +67,6 @@ const RootStack = () => {
           component={HomeScreen}
           options={{ title: "Home" }}
         />
-
         {/* Usuarios */}
         <Stack.Screen
           name="RegisterUser"
@@ -86,7 +98,6 @@ const RootStack = () => {
           component={UserMenu}
           options={{ title: "Gestión de Usuarios" }}
         />
-
         {/* Retos */}
         <Stack.Screen
           name="RetosMenu"
@@ -118,7 +129,6 @@ const RootStack = () => {
           component={ViewAllRetos}
           options={{ title: "Ver todos los Retos" }}
         />
-
         {/* Materiales Reciclables */}
         <Stack.Screen
           name="MaterialesReciclablesMenu"
@@ -149,6 +159,16 @@ const RootStack = () => {
           name="ViewAllMaterialReciclable"
           component={ViewAllMaterialReciclable}
           options={{ title: "Ver todos los Materiales Reciclables" }}
+        />
+        <Stack.Screen
+          name="ParticiparReto"
+          component={ParticiparReto}
+          options={{ title: "Participar en Reto" }}
+        />
+        <Stack.Screen
+          name="UserPanel"
+          component={UserPanel}
+          options={{ title: "Participar en Reto" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -41,6 +41,13 @@ const HomeScreen = ({ navigation }) => {
                 navigation.navigate("MaterialesReciclablesMenu")
               }
             />
+
+            <Button
+              title="PARTICIPAR EN RETO"
+              btnColor="black"
+              btnIcon="check-circle"
+              customPress={() => navigation.navigate("ParticiparReto")}
+            />
           </ScrollView>
         </View>
 

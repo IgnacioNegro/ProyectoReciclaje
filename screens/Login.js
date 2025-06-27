@@ -19,6 +19,7 @@ import AuthLoading from "./AuthLoading";
 const Login = ({ navigation }) => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
+  // Cargar la fuente Montserrat pra el titulo
   let [fontsLoaded] = useFonts({
     Montserrat_400Regular,
   });

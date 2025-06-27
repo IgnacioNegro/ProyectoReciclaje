@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import InputText from "../../components/InputText.js";
@@ -18,6 +19,7 @@ const RegisterReto = ({ navigation }) => {
   const [categoria, setCategoria] = useState("");
   const [fechaLimite, setFechaLimite] = useState("");
   const [puntajeAsignado, setPuntajeAsignado] = useState("");
+  const [estado, setEstado] = useState("Pendiente");
 
   const clearData = () => {
     setNombre("");
@@ -25,7 +27,18 @@ const RegisterReto = ({ navigation }) => {
     setCategoria("");
     setFechaLimite("");
     setPuntajeAsignado("");
+    setEstado("Pendiente");
   };
+
+  const categorias = [
+    "Papel",
+    "Plastico",
+    "Electronico",
+    "Metal",
+    "Textil",
+    "Orgánico",
+    "Otro",
+  ];
 
   const registerReto = async () => {
     if (
@@ -57,7 +70,8 @@ const RegisterReto = ({ navigation }) => {
         descripcion: descripcion.trim(),
         categoria: categoria.trim(),
         fechaLimite: fechaLimite.trim(),
-        puntajeAsignado: puntajeAsignado.trim(),
+        puntajeAsignado: parseInt(puntajeAsignado),
+        estado, // <-- Estado agregado aquí
       };
 
       retos.push(nuevoReto);
@@ -79,6 +93,7 @@ const RegisterReto = ({ navigation }) => {
         <KeyboardAvoidingView behavior="padding" style={styles.container}>
           <View style={styles.formContainer}>
             <Text style={styles.title}>Registrar Reto</Text>
+
             <InputText
               placeholder="Nombre del reto"
               value={nombre}
@@ -91,12 +106,29 @@ const RegisterReto = ({ navigation }) => {
               onChangeText={setDescripcion}
               style={styles.input}
             />
-            <InputText
-              placeholder="Categoría"
-              value={categoria}
-              onChangeText={setCategoria}
-              style={styles.input}
-            />
+            <Text style={styles.label}>Selecciona una categoría:</Text>
+            <View style={styles.optionsContainer}>
+              {categorias.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[
+                    styles.optionButton,
+                    categoria === cat && styles.optionSelected,
+                  ]}
+                  onPress={() => setCategoria(cat)}
+                >
+                  <Text
+                    style={
+                      categoria === cat
+                        ? [styles.optionText, styles.optionTextSelected]
+                        : styles.optionText
+                    }
+                  >
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             <InputText
               placeholder="Fecha Límite (YYYY-MM-DD)"
               value={fechaLimite}
@@ -110,6 +142,31 @@ const RegisterReto = ({ navigation }) => {
               keyboardType="numeric"
               style={styles.input}
             />
+
+            {/* Selector de Estado */}
+            <Text style={styles.label}>Estado del reto:</Text>
+            <View style={styles.optionsContainer}>
+              {["Pendiente", "Aprobado", "Rechazado"].map((estadoItem) => (
+                <TouchableOpacity
+                  key={estadoItem}
+                  style={[
+                    styles.optionButton,
+                    estado === estadoItem && styles.optionSelected,
+                  ]}
+                  onPress={() => setEstado(estadoItem)}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      estado === estadoItem && styles.optionTextSelected,
+                    ]}
+                  >
+                    {estadoItem}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <SingleButton title="Guardar Reto" customPress={registerReto} />
           </View>
         </KeyboardAvoidingView>
@@ -134,5 +191,35 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  optionsContainer: {
+    flexDirection: "row",
+    marginBottom: 15,
+    flexWrap: "wrap",
+  },
+  optionButton: {
+    backgroundColor: "#eee",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginRight: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+  optionSelected: {
+    backgroundColor: "#4caf50",
+    borderColor: "#388e3c",
+  },
+  optionText: {
+    color: "#333",
+    fontWeight: "600",
+  },
+  optionTextSelected: {
+    color: "white",
   },
 });

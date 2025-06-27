@@ -110,7 +110,8 @@ const RegisterUser = ({ navigation }) => {
         age,
         neighborhood,
         profilePicture,
-        retosParticipados: [], // Prepara el array para guardar retos después
+        retosParticipados: [],
+        puntaje: 0,
       };
 
       // Traer la lista de usuarios actual
