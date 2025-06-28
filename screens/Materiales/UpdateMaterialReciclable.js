@@ -19,14 +19,14 @@ const UpdateMaterialReciclable = () => {
   const [imagen, setImagen] = useState("");
 
   const searchMaterialReciclable = async () => {
-    if (!nombreBusqueda.trim()) {
-      Alert.alert("El nombre del material reciclable es requerido!");
+    const claveValor = nombreBusqueda.trim().toLowerCase();
+
+    if (!claveValor) {
+      Alert.alert("Error", "Ingrese un nombre valido para buscar.");
       return;
     }
 
     try {
-      const claveValor = nombreBusqueda.trim().toLowerCase();
-
       const data = await AsyncStorage.getItem("materiales");
       const materiales = data ? JSON.parse(data) : [];
 
@@ -39,54 +39,73 @@ const UpdateMaterialReciclable = () => {
         setCategoria(materialEncontrado.categoria);
         setImagen(materialEncontrado.imagen);
       } else {
-        Alert.alert("Material Reciclable no encontrado!");
+        Alert.alert("Material Reciclable no encontrado");
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error al buscar Material.");
+      Alert.alert("Error al buscar el material reciclable.");
     }
   };
 
-  const updateMaterialReciclable = async () => {
-    if (
-      !nombre.trim() ||
-      !categoria.trim() ||
-      !imagen.trim() ||
-      !nombreBusqueda.trim()
-    ) {
-      Alert.alert("Por favor completa todos los campos");
+  const updateMaterialReciclable = () => {
+    const nombreBusquedaTrim = nombreBusqueda.trim();
+    const nombreTrim = nombre.trim();
+    const categoriaTrim = categoria.trim();
+    const imagenTrim = imagen.trim();
+
+    if (!nombreBusquedaTrim) {
+      Alert.alert("Error", "Ingrese un nombre válido).");
+      return;
+    }
+    
+    if (!categoriaTrim) {
+      Alert.alert("Error", "Por favor ingrese la categoria.");
       return;
     }
 
-    try {
-      const claveValor = nombreBusqueda.trim().toLowerCase();
-
-      const data = await AsyncStorage.getItem("materiales");
-      let materiales = data ? JSON.parse(data) : [];
-
-      const index = materiales.findIndex(
-        (mat) => mat.nombre.toLowerCase() === claveValor
-      );
-
-      if (index === -1) {
-        Alert.alert("Material no encontrado para actualizar");
-        return;
-      }
-
-      // Actualizar el material en la posición encontrada
-      materiales[index] = {
-        nombre,
-        categoria,
-        imagen,
-      };
-
-      await AsyncStorage.setItem("materiales", JSON.stringify(materiales));
-
-      Alert.alert("Material actualizado con éxito");
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error al actualizar el material.");
+    if (!imagenTrim) {
+      Alert.alert("Error", "Por favor ingrese la URL de la imagen.");
+      return;
     }
+
+    Alert.alert(
+      "Confirmar actualización",
+      `¿Desea actualizar el material "${nombreBusquedaTrim}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Actualizar",
+          onPress: async () => {
+            try {
+              const data = await AsyncStorage.getItem("materiales");
+              let materiales = data ? JSON.parse(data) : [];
+
+              const index = materiales.findIndex(
+                (mat) => mat.nombre.toLowerCase() === nombreBusquedaTrim.toLowerCase()
+              );
+
+              if (index === -1) {
+                Alert.alert("Error", "Material no encontrado para actualizar.");
+                return;
+              }
+
+              materiales[index] = {
+                nombre: nombreTrim,
+                categoria: categoriaTrim,
+                imagen: imagenTrim,
+              };
+
+              await AsyncStorage.setItem("materiales", JSON.stringify(materiales));
+
+              Alert.alert("Éxito", "Material actualizado con éxito.");
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error al actualizar el material.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -99,29 +118,29 @@ const UpdateMaterialReciclable = () => {
               <InputText
                 placeholder="Ingrese el nombre del material reciclable a buscar"
                 style={styles.inputStyle}
-                onChangeText={(text) => setNombreBusqueda(text)}
+                onChangeText={setNombreBusqueda}
                 value={nombreBusqueda}
               />
 
-              <SingleButton
-                title="Buscar"
-                customPress={searchMaterialReciclable}
-              />
-              <InputText
-                placeholder="Ingrese la categoría del material reciclable"
-                value={categoria}
-                onChangeText={(text) => setCategoria(text)}
-              />
+              <SingleButton title="Buscar" customPress={searchMaterialReciclable} />
 
               <InputText
-                placeholder="Ingrese la URL de la imagen"
+                placeholder="Nuevo nombre del material"
+                value={nombre}
+                onChangeText={setNombre}
+              />
+              <InputText
+                placeholder="Nueva categoría del material"
+                value={categoria}
+                onChangeText={setCategoria}
+              />
+              <InputText
+                placeholder="Nueva URL de imagen"
                 value={imagen}
-                onChangeText={(text) => setImagen(text)}
+                onChangeText={setImagen}
               />
-              <SingleButton
-                title="Actualizar"
-                customPress={updateMaterialReciclable}
-              />
+
+              <SingleButton title="Actualizar" customPress={updateMaterialReciclable} />
             </KeyboardAvoidingView>
           </ScrollView>
         </View>
@@ -150,9 +169,5 @@ const styles = StyleSheet.create({
   },
   inputStyle: {
     padding: 15,
-  },
-  keyboardView: {
-    flex: 1,
-    justifyContent: "space-between",
   },
 });

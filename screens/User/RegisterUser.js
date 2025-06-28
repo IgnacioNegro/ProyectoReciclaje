@@ -72,82 +72,90 @@ const RegisterUser = ({ navigation }) => {
   };
 
   const registerUser = async () => {
-    if (!userName.trim()) {
-      Alert.alert("Ingrese su nombre de usuario");
-      return;
-    }
-    if (!password.trim()) {
-      Alert.alert("Ingrese su password");
-      return;
-    }
-    if (!email.trim() || email.indexOf("@") === -1) {
-      Alert.alert("Ingrese su email correctamente");
-      return;
-    }
-    if (!name.trim()) {
-      Alert.alert("Ingrese su nombre");
-      return;
-    }
-    if (!age.trim()) {
-      Alert.alert("Ingrese su edad");
-      return;
-    }
-    if (!neighborhood.trim()) {
-      Alert.alert("Ingrese su barrio");
-      return;
-    }
-    if (!profilePicture.trim()) {
-      Alert.alert("Ingrese su foto de perfil");
+  const userNameTrim = userName.trim();
+  const passwordTrim = password.trim();
+  const emailTrim = email.trim();
+  const nameTrim = name.trim();
+  const ageTrim = age.trim();
+  const neighborhoodTrim = neighborhood.trim();
+  const profilePictureTrim = profilePicture.trim();
+
+  if (!userNameTrim) {
+    Alert.alert("Error", "Por favor ingrese un nombre de usuario");
+    return;
+  }
+
+  if (!passwordTrim) {
+    Alert.alert("Error", "Por favor ingrese una contraseña");
+    return;
+  }
+
+  if (!emailTrim || !emailTrim.includes("@")) {
+    Alert.alert("Error", "Por favor ingrese un email válido");
+    return;
+  }
+
+  if (!nameTrim) {
+    Alert.alert("Error", "Por favor ingrese su nombre");
+    return;
+  }
+
+  if (!ageTrim) {
+    Alert.alert("Error", "Por favor ingrese su edad");
+    return;
+  }
+
+  if (!neighborhoodTrim) {
+    Alert.alert("Error", "Por favor ingrese su barrio");
+    return;
+  }
+
+  if (!profilePictureTrim) {
+    Alert.alert("Error", "Por favor seleccione una foto de perfil");
+    return;
+  }
+
+  try {
+    const nuevoUsuario = {
+      userName: userNameTrim,
+      password: passwordTrim,
+      email: emailTrim,
+      name: nameTrim,
+      age: ageTrim,
+      neighborhood: neighborhoodTrim,
+      profilePicture: profilePictureTrim,
+      retosParticipados: [],
+      puntaje: 0,
+    };
+
+    const data = await AsyncStorage.getItem("usuarios");
+    const usuarios = data ? JSON.parse(data) : [];
+
+    const yaExiste = usuarios.some(
+      (usuario) => usuario.userName.toLowerCase() === userNameTrim.toLowerCase()
+    );
+
+    if (yaExiste) {
+      Alert.alert("Error", "Ese nombre de usuario ya está registrado");
       return;
     }
 
-    try {
-      const nuevoUsuario = {
-        userName,
-        password,
-        email,
-        name,
-        age,
-        neighborhood,
-        profilePicture,
-        retosParticipados: [],
-        puntaje: 0,
-      };
+    usuarios.push(nuevoUsuario);
+    await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
 
-      // Traer la lista de usuarios actual
-      const data = await AsyncStorage.getItem("usuarios");
-      const usuarios = data ? JSON.parse(data) : [];
+    clearData();
+    Alert.alert("Éxito", "Usuario registrado correctamente", [
+      {
+        text: "Confirmar",
+        onPress: () => navigation.navigate("Login"),
+      },
+    ]);
+  } catch (error) {
+    console.error("Error al registrar usuario:", error);
+    Alert.alert("Error", "No se pudo registrar el usuario");
+  }
+};
 
-      // Validar que no exista el mismo userName
-      const yaExiste = usuarios.some(
-        (usuario) => usuario.userName.toLowerCase() === userName.toLowerCase()
-      );
-
-      if (yaExiste) {
-        Alert.alert("Ese nombre de usuario ya está registrado");
-        return;
-      }
-
-      usuarios.push(nuevoUsuario);
-      await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
-
-      clearData();
-      Alert.alert(
-        "Éxito",
-        "Usuario registrado!",
-        [
-          {
-            text: "Confirmar",
-            onPress: () => navigation.navigate("Login"),
-          },
-        ],
-        { cancelable: false }
-      );
-    } catch (error) {
-      console.error("Error al registrar usuario:", error);
-      Alert.alert("Error al registrar usuario.");
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>

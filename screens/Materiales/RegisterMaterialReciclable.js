@@ -38,16 +38,30 @@ const RegisterMaterialReciclable = ({ navigation }) => {
   };
 
   const registerMaterialReciclable = async () => {
-    if (!nombre.trim() || !categoria.trim() || !imagen.trim()) {
-      Alert.alert("Error", "Por favor completa todos los campos");
+    const nombreTrim = nombre.trim();
+    const categoriaTrim = categoria.trim();
+    const imagenTrim = imagen.trim();
+
+    if (!nombreTrim) {
+      Alert.alert("Error", "Por favor selecciona un nombre");
       return;
     }
 
+    if (!categoriaTrim) {
+      Alert.alert("Error", "Por favor selecciona una categoria");
+      return;
+    }
+
+    if (!imagenTrim) {
+      Alert.alert("Error", "Por favor selecciona una imagen");
+      return;
+    }
+    
     try {
       const nuevoMaterial = {
-        nombre: nombre.trim(),
-        categoria: categoria.trim(),
-        imagen: imagen.trim(),
+        nombre: nombreTrim,
+        categoria: categoriaTrim,
+        imagen: imagenTrim,
       };
 
       const data = await AsyncStorage.getItem("materiales");
@@ -126,12 +140,7 @@ const RegisterMaterialReciclable = ({ navigation }) => {
             {imagen ? (
               <Image
                 source={{ uri: imagen }}
-                style={{
-                  width: "100%",
-                  height: 200,
-                  marginVertical: 10,
-                  borderRadius: 10,
-                }}
+                style={styles.imagePreview}
               />
             ) : (
               <Text style={{ fontStyle: "italic", marginTop: 10 }}>
@@ -154,25 +163,11 @@ const RegisterMaterialReciclable = ({ navigation }) => {
 export default RegisterMaterialReciclable;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  formContainer: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  input: {
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
+  formContainer: { padding: 20 },
+  title: { fontSize: 24, marginBottom: 20, textAlign: "center" },
+  input: { marginBottom: 15 },
+  label: { fontSize: 16, marginBottom: 8 },
   optionsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -199,7 +194,12 @@ const styles = StyleSheet.create({
   optionTextSelected: {
     color: "white",
   },
-
+  imagePreview: {
+    width: "100%",
+    height: 200,
+    marginVertical: 10,
+    borderRadius: 10,
+  },
   footer: {
     position: "absolute",
     bottom: 20,

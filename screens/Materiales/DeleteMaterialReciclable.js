@@ -1,84 +1,124 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
+  Text,
+  TouchableOpacity,
   View,
+  Image,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 import InputText from "../../components/InputText.js";
-import MyText from "../../components/MyText.js";
 import SingleButton from "../../components/SingleButton.js";
 
 const DeleteMaterialReciclable = ({ navigation }) => {
-  const [nombreMaterial, setNombreMaterial] = useState("");
+  const [nombreBuscar, setNombreBuscar] = useState("");
+  const [materialEncontrado, setMaterialEncontrado] = useState(null);
 
-  const deleteMaterial = async () => {
+  // Función para buscar el material por nombre
+  const buscarMaterial = async () => {
+    const clave = nombreBuscar.trim().toLowerCase();
+    if (!clave) {
+      Alert.alert("Error", "Por favor ingresa el nombre del material a buscar");
+      return;
+    }
+
     try {
-      const claveValor = nombreMaterial.trim().toLowerCase();
-
-      if (!claveValor) {
-        Alert.alert(
-          "Error",
-          "Por favor ingresa el nombre del material reciclable"
-        );
-        return;
-      }
-
-      // Obtener el array de materiales
       const data = await AsyncStorage.getItem("materiales");
-      let materiales = data ? JSON.parse(data) : [];
+      const materiales = data ? JSON.parse(data) : [];
 
-      // Buscar índice del material a eliminar
-      const index = materiales.findIndex(
-        (mat) => mat.nombre.toLowerCase() === claveValor
+      const encontrado = materiales.find(
+        (mat) => mat.nombre.toLowerCase() === clave
       );
 
-      if (index === -1) {
-        Alert.alert("Error", "Material reciclable no existe");
+      if (!encontrado) {
+        Alert.alert("No encontrado", "No se encontró ningún material con ese nombre");
+        setMaterialEncontrado(null);
         return;
       }
 
-      // Eliminar material del array
-      materiales.splice(index, 1);
-
-      // Guardar el array actualizado
-      await AsyncStorage.setItem("materiales", JSON.stringify(materiales));
-
-      Alert.alert("Éxito", "Material reciclable eliminado!");
-      navigation.navigate("HomeScreen");
+      setMaterialEncontrado(encontrado);
     } catch (error) {
-      Alert.alert("Error al eliminar el material reciclable");
+      Alert.alert("Error", "Ocurrió un error al buscar el material");
+      console.error(error);
+    }
+  };
+  
+  const eliminarMaterial = () => {
+    Alert.alert(
+      "Confirmar eliminación",
+      `¿Estás seguro que querés eliminar el material "${materialEncontrado.nombre}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Eliminar", style: "destructive", onPress: eliminarConfirmado },
+      ]
+    );
+  };
+  
+  const eliminarConfirmado = async () => {
+    try {
+      const data = await AsyncStorage.getItem("materiales");
+      const materiales = data ? JSON.parse(data) : [];
+
+      const nuevosMateriales = materiales.filter(
+        (mat) => mat.nombre.toLowerCase() !== materialEncontrado.nombre.toLowerCase()
+      );
+
+      await AsyncStorage.setItem("materiales", JSON.stringify(nuevosMateriales));
+
+      Alert.alert("Éxito", "Material reciclable eliminado");
+      setMaterialEncontrado(null);
+      setNombreBuscar("");
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert("Error", "No se pudo eliminar el material");
       console.error(error);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.viewContainer}>
-        <View style={styles.generalView}>
-          <ScrollView>
-            <MyText
-              text="Buscar material reciclable a eliminar"
-              style={styles.text}
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <KeyboardAvoidingView behavior="padding" style={styles.container}>
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>Buscar Material Reciclable</Text>
+            <InputText
+              placeholder="Nombre del material"
+              value={nombreBuscar}
+              onChangeText={setNombreBuscar}
+              style={styles.input}
             />
-            <KeyboardAvoidingView style={styles.keyboardView}>
-              <InputText
-                placeholder="Nombre del material reciclable"
-                onChangeText={(text) => setNombreMaterial(text)}
-                value={nombreMaterial}
-              />
-              <SingleButton
-                title="Borrar Material"
-                customPress={deleteMaterial}
-              />
-            </KeyboardAvoidingView>
-          </ScrollView>
-        </View>
-      </View>
+            <SingleButton title="Buscar" customPress={buscarMaterial} />
+
+            {materialEncontrado && (
+              <View style={styles.resultContainer}>
+                <Text style={styles.resultLabel}>Nombre:</Text>
+                <Text style={styles.resultValue}>{materialEncontrado.nombre}</Text>
+
+                <Text style={styles.resultLabel}>Categoría:</Text>
+                <Text style={styles.resultValue}>{materialEncontrado.categoria}</Text>
+
+                {materialEncontrado.imagen ? (
+                  <Image
+                    source={{ uri: materialEncontrado.imagen }}
+                    style={styles.image}
+                  />
+                ) : (
+                  <Text style={{ fontStyle: "italic" }}>Sin imagen</Text>
+                )}
+
+                <SingleButton
+                  title="Eliminar Material"
+                  customPress={eliminarMaterial}
+                />
+              </View>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -89,20 +129,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  viewContainer: {
-    flex: 1,
-    backgroundColor: "white",
+  formContainer: {
+    padding: 20,
   },
-  generalView: {
-    flex: 1,
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+    textAlign: "center",
   },
-  text: {
-    padding: 10,
-    marginLeft: 25,
-    color: "black",
+  input: {
+    marginBottom: 15,
   },
-  keyboardView: {
-    flex: 1,
-    justifyContent: "space-between",
+  resultContainer: {
+    marginTop: 30,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+  resultLabel: {
+    fontWeight: "bold",
+  },
+  resultValue: {
+    marginBottom: 10,
+  },
+  image: {
+    width: "100%",
+    height: 200,
+    marginBottom: 15,
+    borderRadius: 8,
   },
 });

@@ -1,92 +1,188 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useState } from "react";
-import { Alert, FlatList, SafeAreaView, StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import InputText from "../../components/InputText.js";
 import MyText from "../../components/MyText.js";
+import SingleButton from "../../components/SingleButton.js";
 
-const ViewAllRetos = ({ navigation }) => {
+const UpdateReto = () => {
+  const [nombreBusqueda, setNombreBusqueda] = useState("");
+  const [originalNombre, setOriginalNombre] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [fechaLimite, setFechaLimite] = useState("");
+  const [puntajeAsignado, setPuntajeAsignado] = useState("");
+  const [estado, setEstado] = useState("");
+
   const [retos, setRetos] = useState([]);
 
-  useEffect(() => {
-    const fetchRetos = async () => {
-      try {
-        const data = await AsyncStorage.getItem("retos");
-        const retosList = data ? JSON.parse(data) : [];
+  const clearForm = () => {
+    setNombreBusqueda("");
+    setOriginalNombre("");
+    setNombre("");
+    setDescripcion("");
+    setCategoria("");
+    setFechaLimite("");
+    setPuntajeAsignado("");
+    setEstado("");
+    setRetos([]);
+  };
 
-        if (retosList.length > 0) {
-          setRetos(retosList);
-        } else {
-          Alert.alert(
-            "Mensaje",
-            "No hay Retos!!!",
-            [{ text: "OK", onPress: () => navigation.navigate("HomeScreen") }],
-            { cancelable: false }
-          );
-        }
-      } catch (error) {
-        console.error(error);
-        Alert.alert("Error al cargar retos!");
+  const searchReto = async () => {
+    if (!nombreBusqueda.trim()) {
+      Alert.alert("Error", "Ingrese el nombre del reto para buscar.");
+      return;
+    }
+    try {
+      const data = await AsyncStorage.getItem("retos");
+      const retosData = data ? JSON.parse(data) : [];
+
+      const retoEncontrado = retosData.find(
+        (r) => r.nombre.toLowerCase() === nombreBusqueda.trim().toLowerCase()
+      );
+
+      if (!retoEncontrado) {
+        Alert.alert("Reto no encontrado");
+        clearForm();
+        return;
       }
-    };
-    fetchRetos();
-  }, []);
 
-  const listItemView = (item) => {
-    return (
-      <View key={item.nombre} style={styles.listItemView}>
-        <MyText text="Nombre del Reto: " style={styles.text} />
-        <MyText text={item.nombre} style={styles.text} />
-        <MyText text="Descripción: " style={styles.text} />
-        <MyText text={item.descripcion} style={styles.text} />
-        <MyText text="Categoría: " style={styles.text} />
-        <MyText text={item.categoria} style={styles.text} />
-        <MyText text="Fecha Límite: " style={styles.text} />
-        <MyText text={item.fechaLimite} style={styles.text} />
-        <MyText text="Puntaje Asignado: " style={styles.text} />
-        <MyText text={item.puntajeAsignado} style={styles.text} />
-        <MyText text="------------------------" style={styles.text} />
-      </View>
+      setOriginalNombre(retoEncontrado.nombre);
+      setNombre(retoEncontrado.nombre);
+      setDescripcion(retoEncontrado.descripcion);
+      setCategoria(retoEncontrado.categoria);
+      setFechaLimite(retoEncontrado.fechaLimite);
+      setPuntajeAsignado(String(retoEncontrado.puntajeAsignado));
+      setEstado(retoEncontrado.estado);
+      setRetos(retosData);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error al buscar reto");
+    }
+  };
+
+  const updateReto = () => {
+    if (
+      !nombre.trim() ||
+      !descripcion.trim() ||
+      !categoria.trim() ||
+      !fechaLimite.trim() ||
+      !puntajeAsignado.trim() ||
+      !estado.trim()
+    ) {
+      Alert.alert("Error", "Todos los campos son requeridos.");
+      return;
+    }
+
+    const puntajeNum = parseInt(puntajeAsignado);
+    if (isNaN(puntajeNum) || puntajeNum < 1 || puntajeNum > 10) {
+      Alert.alert("Error", "El puntaje asignado debe estar entre 1 y 10.");
+      return;
+    }
+
+    Alert.alert(
+      "Confirmar actualización",
+      `¿Desea actualizar el reto "${originalNombre}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Actualizar",
+          onPress: async () => {
+            try {
+              const index = retos.findIndex(
+                (r) => r.nombre.toLowerCase() === originalNombre.toLowerCase()
+              );
+              if (index === -1) {
+                Alert.alert("Error", "Reto no encontrado para actualizar.");
+                return;
+              }
+
+              retos[index] = {
+                nombre,
+                descripcion,
+                categoria,
+                fechaLimite,
+                puntajeAsignado: puntajeNum,
+                estado,
+              };
+
+              await AsyncStorage.setItem("retos", JSON.stringify(retos));
+              Alert.alert("Éxito", "Reto actualizado correctamente.");
+              clearForm();
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error al actualizar el reto.");
+            }
+          },
+        },
+      ]
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.viewContainer}>
-        <FlatList
-          contentContainerStyle={{ paddingHorizontal: 20 }}
-          data={retos}
-          keyExtractor={(item) => item.nombre}
-          renderItem={({ item }) => listItemView(item)}
-          ListEmptyComponent={
-            <MyText
-              text="No hay retos para mostrar."
-              style={{ textAlign: "center", marginTop: 20 }}
+        <ScrollView keyboardShouldPersistTaps="handled">
+          <KeyboardAvoidingView behavior="padding" style={{ padding: 20 }}>
+            <MyText text="Buscar Reto" style={styles.text} />
+            <InputText
+              placeholder="Ingrese nombre del reto"
+              style={styles.input}
+              onChangeText={setNombreBusqueda}
+              value={nombreBusqueda}
             />
-          }
-        />
+            <SingleButton title="Buscar" customPress={searchReto} />
+
+            {/* Muestra inputs solo si encontro el reto */}
+            {originalNombre ? (
+              <>
+                <InputText placeholder="Nombre" value={nombre} onChangeText={setNombre} />
+                <InputText
+                  placeholder="Descripción"
+                  value={descripcion}
+                  onChangeText={setDescripcion}
+                />
+                <InputText
+                  placeholder="Categoría"
+                  value={categoria}
+                  onChangeText={setCategoria}
+                />
+                <InputText
+                  placeholder="Fecha Límite (YYYY-MM-DD)"
+                  value={fechaLimite}
+                  onChangeText={setFechaLimite}
+                />
+                <InputText
+                  placeholder="Puntaje Asignado (1-10)"
+                  keyboardType="numeric"
+                  value={puntajeAsignado}
+                  onChangeText={setPuntajeAsignado}
+                />
+                <InputText placeholder="Estado" value={estado} onChangeText={setEstado} />
+
+                <SingleButton title="Actualizar" customPress={updateReto} />
+              </>
+            ) : null}
+          </KeyboardAvoidingView>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
 };
 
-export default ViewAllRetos;
+export default UpdateReto;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  viewContainer: {
-    flex: 1,
-    backgroundColor: "white",
-  },
-  listItemView: {
-    backgroundColor: "white",
-    margin: 5,
-    padding: 10,
-    borderRadius: 10,
-  },
-  text: {
-    padding: 5,
-    marginLeft: 10,
-    color: "black",
-  },
+  container: { flex: 1 },
+  viewContainer: { flex: 1, backgroundColor: "white" },
+  text: { padding: 10, marginLeft: 5, color: "black", fontWeight: "bold" },
+  input: { marginVertical: 8, paddingHorizontal: 10 },
 });

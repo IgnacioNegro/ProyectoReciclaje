@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StyleSheet,
   View,
+  Button,
 } from "react-native";
 import MyText from "../../components/MyText.js";
 
@@ -14,58 +15,97 @@ const ViewAllUsers = ({ navigation }) => {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const usuarios = await AsyncStorage.getItem("usuarios");
-        const parsedUsuarios = usuarios ? JSON.parse(usuarios) : [];
-        console.log("usuarios", parsedUsuarios);
-        if (parsedUsuarios.length > 0) {
-          setUsers(parsedUsuarios);
-        } else {
-          Alert.alert(
-            "Mensaje",
-            "No hay usuarios!!!",
-            [{ text: "OK", onPress: () => navigation.navigate("HomeScreen") }],
-            { cancelable: false }
-          );
-        }
-      } catch (error) {
-        console.error(error);
-        Alert.alert("Error al cargar usuarios!");
-      }
-    };
     fetchUsers();
   }, []);
 
-  const listItemView = (item) => {
-    return (
-      <View key={item.userName} style={styles.listItemView}>
-        {/* Imagen de perfil */}
-        {item.profilePicture ? (
-          <Image
-            source={{ uri: item.profilePicture }}
-            style={styles.profileImage}
-          />
-        ) : null}
+  const fetchUsers = async () => {
+    try {
+      const usuarios = await AsyncStorage.getItem("usuarios");
+      const parsedUsuarios = usuarios ? JSON.parse(usuarios) : [];
 
-        <MyText text={item.userName} style={styles.text} />
-        <MyText text="Email de usuario: " style={styles.text} />
-        <MyText text={item.email} style={styles.text} />
-      </View>
+      if (parsedUsuarios.length > 0) {
+        setUsers(parsedUsuarios);
+      } else {
+        Alert.alert(
+          "Mensaje",
+          "No hay usuarios",
+          [{ text: "OK", onPress: () => navigation.navigate("HomeScreen") }],
+          { cancelable: false }
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error al cargar usuarios!");
+    }
+  };
+
+  const eliminarUsuario = (userName) => {
+    Alert.alert(
+      "Confirmar eliminación",
+      `¿Estás seguro que querés eliminar al usuario "${userName}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const data = await AsyncStorage.getItem("usuarios");
+              let usuarios = data ? JSON.parse(data) : [];
+
+              usuarios = usuarios.filter((u) => u.userName !== userName);
+
+              await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
+              setUsers(usuarios);
+
+              Alert.alert("Usuario eliminado correctamente");
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error al eliminar el usuario");
+            }
+          },
+        },
+      ]
     );
   };
 
+  const listItemView = (item) => (
+    <View key={item.userName} style={styles.listItemView}>
+      {item.profilePicture ? (
+        <Image source={{ uri: item.profilePicture }} style={styles.profileImage} />
+      ) : null}
+
+      <MyText text={item.userName} style={styles.userName} />
+      <MyText text="Email de usuario:" style={styles.label} />
+      <MyText text={item.email} style={styles.text} />
+
+      {/* Botón Eliminar */}
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Eliminar"
+          color="red"
+          onPress={() => eliminarUsuario(item.userName)}
+        />
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <View>
-        <View>
-          <FlatList
-            contentContainerStyle={{ paddingHorizontal: 20 }}
-            data={users}
-            keyExtractor={(item) => item.userName}
-            renderItem={({ item }) => listItemView(item)}
-          />
-        </View>
+      <View style={styles.viewContainer}>
+        <FlatList
+          contentContainerStyle={{ paddingHorizontal: 20 }}
+          data={users}
+          keyExtractor={(item) => item.userName}
+          renderItem={({ item }) => listItemView(item)}
+          ListEmptyComponent={
+            <MyText
+              text="No hay usuarios para mostrar."
+              style={styles.emptyText}
+            />
+          }
+          keyboardShouldPersistTaps="handled"
+        />
       </View>
     </SafeAreaView>
   );
@@ -74,39 +114,42 @@ const ViewAllUsers = ({ navigation }) => {
 export default ViewAllUsers;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  viewContainer: {
-    flex: 1,
-    backgroundColor: "white",
-  },
-  generalView: {
-    flex: 1,
-  },
-  listView: {
-    marginTop: 20,
-  },
+  container: { flex: 1 },
+  viewContainer: { flex: 1, backgroundColor: "white" },
   listItemView: {
     backgroundColor: "white",
-    margin: 5,
+    marginVertical: 5,
     padding: 10,
     borderRadius: 10,
-  },
-  text: {
-    padding: 5,
-    marginLeft: 10,
-    color: "black",
-    alignContent: "center",
     alignItems: "center",
   },
-
   profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    alignSelf: "center",
     marginBottom: 10,
+  },
+  userName: {
+    fontWeight: "bold",
+    fontSize: 18,
+    color: "black",
+  },
+  label: {
+    fontWeight: "bold",
+    color: "black",
+  },
+  text: {
+    marginTop: 2,
+    color: "black",
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#444",
+  },
+  buttonContainer: {
+    marginTop: 10,
+    width: "80%",
   },
 });

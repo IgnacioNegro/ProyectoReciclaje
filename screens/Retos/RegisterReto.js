@@ -41,51 +41,78 @@ const RegisterReto = ({ navigation }) => {
   ];
 
   const registerReto = async () => {
-    if (
-      !nombre.trim() ||
-      !descripcion.trim() ||
-      !categoria.trim() ||
-      !fechaLimite.trim() ||
-      !puntajeAsignado.trim()
-    ) {
-      Alert.alert("Error", "Por favor completa todos los campos");
+  const nombreTrim = nombre.trim();
+  const descripcionTrim = descripcion.trim();
+  const categoriaTrim = categoria.trim();
+  const fechaLimiteTrim = fechaLimite.trim();
+  const puntajeTrim = puntajeAsignado.trim();
+
+  if (!nombreTrim) {
+    Alert.alert("Error", "Por favor ingrese el nombre del reto");
+    return;
+  }
+
+  if (!descripcionTrim) {
+    Alert.alert("Error", "Por favor ingrese una descripción");
+    return;
+  }
+
+  if (!categoriaTrim) {
+    Alert.alert("Error", "Por favor seleccione una categoría");
+    return;
+  }
+
+  if (!fechaLimiteTrim) {
+    Alert.alert("Error", "Por favor ingrese una fecha límite");
+    return;
+  }
+
+  if (!puntajeTrim) {
+    Alert.alert("Error", "Por favor ingrese un puntaje asignado");
+    return;
+  }
+
+  const puntaje = parseInt(puntajeTrim);
+  if (isNaN(puntaje) || puntaje < 1 || puntaje > 10) {
+    Alert.alert("Error", "El puntaje debe ser un número entre 1 y 10");
+    return;
+  }
+
+  try {
+    const data = await AsyncStorage.getItem("retos");
+    const retos = data ? JSON.parse(data) : [];
+
+    const yaExiste = retos.some(
+      (r) => r.nombre.toLowerCase() === nombreTrim.toLowerCase()
+    );
+
+    if (yaExiste) {
+      Alert.alert("Error", "Ya existe un reto con ese nombre");
       return;
     }
 
-    try {
-      const data = await AsyncStorage.getItem("retos");
-      const retos = data ? JSON.parse(data) : [];
+    const nuevoReto = {
+      nombre: nombreTrim,
+      descripcion: descripcionTrim,
+      categoria: categoriaTrim,
+      fechaLimite: fechaLimiteTrim,
+      puntajeAsignado: puntaje,
+      estado,
+    };
 
-      // Validar que no exista otro reto con el mismo nombre (case insensitive)
-      const existeReto = retos.some(
-        (r) => r.nombre.toLowerCase() === nombre.trim().toLowerCase()
-      );
-      if (existeReto) {
-        Alert.alert("Error", "Ya existe un reto con ese nombre");
-        return;
-      }
+    retos.push(nuevoReto);
+    await AsyncStorage.setItem("retos", JSON.stringify(retos));
 
-      const nuevoReto = {
-        nombre: nombre.trim(),
-        descripcion: descripcion.trim(),
-        categoria: categoria.trim(),
-        fechaLimite: fechaLimite.trim(),
-        puntajeAsignado: parseInt(puntajeAsignado),
-        estado, // <-- Estado agregado aquí
-      };
+    clearData();
+    Alert.alert("Éxito", "Reto registrado correctamente", [
+      { text: "Confirmar", onPress: () => navigation.goBack() },
+    ]);
+  } catch (error) {
+    console.error("Error al registrar reto:", error);
+    Alert.alert("Error", "No se pudo registrar el reto");
+  }
+};
 
-      retos.push(nuevoReto);
-      await AsyncStorage.setItem("retos", JSON.stringify(retos));
-
-      clearData();
-      Alert.alert("Éxito", "Reto registrado correctamente", [
-        { text: "OK", onPress: () => navigation.goBack() },
-      ]);
-    } catch (error) {
-      console.error("Error al registrar reto:", error);
-      Alert.alert("Error", "No se pudo registrar el reto");
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -136,13 +163,13 @@ const RegisterReto = ({ navigation }) => {
               style={styles.input}
             />
             <InputText
-              placeholder="Puntaje Asignado"
+              placeholder="Puntaje Asignado (1-10)"
               value={puntajeAsignado}
               onChangeText={setPuntajeAsignado}
               keyboardType="numeric"
               style={styles.input}
             />
-
+            
             {/* Selector de Estado */}
             <Text style={styles.label}>Estado del reto:</Text>
             <View style={styles.optionsContainer}>

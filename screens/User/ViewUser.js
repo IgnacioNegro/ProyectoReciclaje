@@ -7,6 +7,8 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  Text,
+  TouchableOpacity,
 } from "react-native";
 import InputText from "../../components/InputText";
 import MyText from "../../components/MyText";
@@ -14,60 +16,116 @@ import SingleButton from "../../components/SingleButton";
 
 const ViewUser = ({ navigation }) => {
   const [userName, setUserName] = useState("");
-  const [usuariosArray, setUserData] = useState(null);
+  const [userData, setUserData] = useState(null);
 
   const getUserData = async () => {
-    console.log("getUserData");
+    const nombreTrim = userName.trim().toLowerCase();
 
-    setUserData(null);
-    if (!userName.trim()) {
-      Alert.alert("El nombre de usuario es requerido!");
+    if (!nombreTrim) {
+      Alert.alert("Error", "Ingrese un nombre válido para buscar.");
       return;
     }
 
     try {
       const data = await AsyncStorage.getItem("usuarios");
-      if (data) {
-        const usuarios = JSON.parse(data);
-        const usuarioEncontrado = usuarios.find(
-          (u) => u.userName.toLowerCase() === userName.toLowerCase()
-        );
-        if (usuarioEncontrado) {
-          setUserData(usuarioEncontrado);
-        } else {
-          Alert.alert("El usuario no existe");
-        }
+      const usuarios = data ? JSON.parse(data) : [];
+
+      const usuario = usuarios.find(
+        (u) => u.userName.toLowerCase() === nombreTrim
+      );
+
+      if (usuario) {
+        setUserData(usuario);
       } else {
-        Alert.alert("No hay usuarios registrados");
+        Alert.alert("Usuario no encontrado", `No existe "${nombreTrim}"`);
+        setUserData(null);
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error al buscar usuario");
+      Alert.alert("Error", "Ocurrió un error al buscar el usuario.");
     }
+  };
+
+  const limpiarBusqueda = () => {
+    setUserName("");
+    setUserData(null);
+  };
+
+  const eliminarUsuario = () => {
+    Alert.alert(
+      "Eliminar usuario",
+      `¿Estás segura/o de eliminar "${userData.userName}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const data = await AsyncStorage.getItem("usuarios");
+              let usuarios = data ? JSON.parse(data) : [];
+
+              usuarios = usuarios.filter(
+                (u) =>
+                  u.userName.toLowerCase() !==
+                  userData.userName.toLowerCase()
+              );
+
+              await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+              Alert.alert("Usuario eliminado correctamente");
+              limpiarBusqueda();
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error al eliminar el usuario");
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.viewContainer}>
-        <View style={styles.generalView}>
-          <ScrollView>
-            <KeyboardAvoidingView style={styles.keyboardView}>
-              <MyText text="Filtro de usuario" style={styles.text} />
-              <InputText
-                style={styles.inputStyle}
-                placeholder="Nombre de usuario a buscar"
-                onChangeText={(text) => setUserName(text)}
-              />
+        <ScrollView keyboardShouldPersistTaps="handled">
+          <KeyboardAvoidingView behavior="padding" style={styles.keyboardView}>
+            <MyText text="Buscar Usuario" style={styles.title} />
+
+            <InputText
+              style={styles.input}
+              placeholder="Ingrese nombre de usuario"
+              value={userName}
+              onChangeText={setUserName}
+            />
+
+            <View style={styles.buttonGroup}>
               <SingleButton title="Buscar" customPress={getUserData} />
-              <View style={styles.presenterView}>
+              {userData && (
+                <TouchableOpacity onPress={limpiarBusqueda}>
+                  <Text style={styles.clearText}>Limpiar</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {userData && (
+              <View style={styles.resultContainer}>
                 <MyText
-                  text={`Email: ${!usuariosArray ? "" : usuariosArray.email}`}
-                  style={styles.presenterText}
+                  text={`Nombre de Usuario: ${userData.userName}`}
+                  style={styles.resultText}
+                />
+                <MyText
+                  text={`Email: ${userData.email}`}
+                  style={styles.resultText}
+                />
+                <SingleButton
+                  title="Eliminar Usuario"
+                  customPress={eliminarUsuario}
                 />
               </View>
-            </KeyboardAvoidingView>
-          </ScrollView>
-        </View>
+            )}
+          </KeyboardAvoidingView>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -78,32 +136,55 @@ export default ViewUser;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
   },
   viewContainer: {
     flex: 1,
-    backgroundColor: "white",
+    padding: 20,
   },
-  generalView: {
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: "#333",
+  },
+  input: {
+    backgroundColor: "#f2f2f2",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    fontSize: 16,
+    color: "#000",
+  },
+  keyboardView: {
     flex: 1,
   },
-  text: {
-    padding: 10,
-    marginLeft: 25,
-    color: "black",
-  },
-  inputStyle: {
+  resultContainer: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: 10,
     padding: 15,
-    margin: 10,
-    color: "black",
+    marginTop: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  presenterView: {
-    flex: 2,
-    marginLeft: 30,
-    marginRight: 30,
-    marginTop: 15,
-    fontSize: 30,
+  resultText: {
+    fontSize: 18,
+    marginBottom: 8,
+    color: "#444",
   },
-  presenterText: {
-    fontSize: 20,
+  buttonGroup: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  clearText: {
+    color: "#d32f2f",
+    fontWeight: "bold",
+    fontSize: 16,
+    padding: 10,
   },
 });

@@ -71,11 +71,11 @@ const ViewAllMaterialReciclable = ({ navigation }) => {
 
         <View style={styles.cardContent}>
           <MyText
-            text={`📦 Material: ${item.nombre}`}
+            text={`Material: ${item.nombre}`}
             style={styles.cardText}
           />
           <MyText
-            text={`📁 Categoría: ${item.categoria}`}
+            text={`Categoría: ${item.categoria}`}
             style={styles.cardText}
           />
         </View>
@@ -165,3 +165,4 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
 });
+
