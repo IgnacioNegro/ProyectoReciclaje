@@ -1,6 +1,13 @@
-import { SafeAreaView, ScrollView, StyleSheet, View, Text, Pressable } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons"; // 👈 necesario para íconos
 import { Montserrat_400Regular, useFonts } from "@expo-google-fonts/montserrat";
+import { FontAwesome5 } from "@expo/vector-icons"; // 👈 necesario para íconos
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import AuthLoading from "../AuthLoading.js";
 
 const MaterialesReciclablesMenu = ({ navigation }) => {

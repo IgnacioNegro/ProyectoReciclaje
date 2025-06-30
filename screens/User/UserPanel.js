@@ -52,9 +52,9 @@ const UserPanel = () => {
     const conteo = [0, 0, 0, 0, 0, 0, 0];
 
     participaciones.forEach((p) => {
-      const dia = new Date(parseInt(p.id)).getDay(); // timestamp -> días
-      const index = dia === 0 ? 6 : dia - 1; // domingo = 0 → índice 6
-      conteo[index]++;
+      const dia = new Date(parseInt(p.id)).getDay(); //  obtenemos el día de la semana (0 a 6)
+      const index = dia === 0 ? 6 : dia - 1; // // convertimos: domingo (0) → índice 6, lunes (1) → índice 0, etc.
+      conteo[index]++; // sumamos una participación en ese día
     });
 
     return {
