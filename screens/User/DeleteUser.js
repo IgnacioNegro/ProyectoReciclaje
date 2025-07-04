@@ -1,18 +1,20 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  Image,
 } from "react-native";
 import InputText from "../../components/InputText.js";
 import SingleButton from "../../components/SingleButton.js";
-import MyText from "../../components/MyText.js";
+import {
+  deleteUserByUserName,
+  getUserByUserName,
+} from "../../database/userService";
 
 const DeleteUser = ({ navigation }) => {
   const [userName, setUserName] = useState("");
@@ -26,15 +28,13 @@ const DeleteUser = ({ navigation }) => {
     }
 
     try {
-      const data = await AsyncStorage.getItem("usuarios");
-      const usuarios = data ? JSON.parse(data) : [];
-
-      const encontrado = usuarios.find(
-        (u) => u.userName.toLowerCase() === clave
-      );
+      const encontrado = await getUserByUserName(clave);
 
       if (!encontrado) {
-        Alert.alert("No encontrado", "No se encontró un usuario con ese nombre");
+        Alert.alert(
+          "No encontrado",
+          "No se encontró un usuario con ese nombre"
+        );
         setUsuarioEncontrado(null);
         return;
       }
@@ -49,32 +49,27 @@ const DeleteUser = ({ navigation }) => {
   const eliminarUsuario = () => {
     Alert.alert(
       "Confirmar eliminación",
-      `¿Estás segura que querés eliminar el usuario "${usuarioEncontrado.userName}"?`,
+      `¿Estás seguro que querés eliminar el usuario "${usuarioEncontrado.userName}"?`,
       [
         { text: "Cancelar", style: "cancel" },
-        { text: "Eliminar", style: "destructive", onPress: eliminarConfirmado },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteUserByUserName(usuarioEncontrado.userName);
+              Alert.alert("Éxito", "Usuario eliminado correctamente");
+              setUserName("");
+              setUsuarioEncontrado(null);
+              navigation.goBack();
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error", "No se pudo eliminar el usuario");
+            }
+          },
+        },
       ]
     );
-  };
-
-  const eliminarConfirmado = async () => {
-    try {
-      const data = await AsyncStorage.getItem("usuarios");
-      const usuarios = data ? JSON.parse(data) : [];
-
-      const nuevosUsuarios = usuarios.filter(
-        (u) => u.userName.toLowerCase() !== usuarioEncontrado.userName.toLowerCase()
-      );
-
-      await AsyncStorage.setItem("usuarios", JSON.stringify(nuevosUsuarios));
-      Alert.alert("Éxito", "Usuario eliminado correctamente");
-      setUserName("");
-      setUsuarioEncontrado(null);
-      navigation.goBack();
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "No se pudo eliminar el usuario");
-    }
   };
 
   return (
@@ -97,10 +92,14 @@ const DeleteUser = ({ navigation }) => {
                 <Text style={styles.resultValue}>{usuarioEncontrado.name}</Text>
 
                 <Text style={styles.resultLabel}>Email:</Text>
-                <Text style={styles.resultValue}>{usuarioEncontrado.email}</Text>
+                <Text style={styles.resultValue}>
+                  {usuarioEncontrado.email}
+                </Text>
 
                 <Text style={styles.resultLabel}>Barrio:</Text>
-                <Text style={styles.resultValue}>{usuarioEncontrado.neighborhood}</Text>
+                <Text style={styles.resultValue}>
+                  {usuarioEncontrado.neighborhood}
+                </Text>
 
                 {usuarioEncontrado.profilePicture ? (
                   <Image
@@ -111,7 +110,10 @@ const DeleteUser = ({ navigation }) => {
                   <Text style={{ fontStyle: "italic" }}>Sin imagen</Text>
                 )}
 
-                <SingleButton title="Eliminar Usuario" customPress={eliminarUsuario} />
+                <SingleButton
+                  title="Eliminar Usuario"
+                  customPress={eliminarUsuario}
+                />
               </View>
             )}
           </View>

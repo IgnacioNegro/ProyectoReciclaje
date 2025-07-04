@@ -1,15 +1,16 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Button,
   FlatList,
   Image,
   SafeAreaView,
   StyleSheet,
   View,
-  Button,
 } from "react-native";
 import MyText from "../../components/MyText.js";
+
+import { deleteUser, getAllUsers } from "../../database/userService.js"; // Ajustar ruta
 
 const ViewAllUsers = ({ navigation }) => {
   const [users, setUsers] = useState([]);
@@ -20,11 +21,10 @@ const ViewAllUsers = ({ navigation }) => {
 
   const fetchUsers = async () => {
     try {
-      const usuarios = await AsyncStorage.getItem("usuarios");
-      const parsedUsuarios = usuarios ? JSON.parse(usuarios) : [];
+      const usuarios = await getAllUsers(); // Trae array de usuarios desde SQLite
 
-      if (parsedUsuarios.length > 0) {
-        setUsers(parsedUsuarios);
+      if (usuarios.length > 0) {
+        setUsers(usuarios);
       } else {
         Alert.alert(
           "Mensaje",
@@ -50,14 +50,8 @@ const ViewAllUsers = ({ navigation }) => {
           style: "destructive",
           onPress: async () => {
             try {
-              const data = await AsyncStorage.getItem("usuarios");
-              let usuarios = data ? JSON.parse(data) : [];
-
-              usuarios = usuarios.filter((u) => u.userName !== userName);
-
-              await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
-              setUsers(usuarios);
-
+              await deleteUser(userName); // Elimina en SQLite
+              await fetchUsers(); // Refresca la lista
               Alert.alert("Usuario eliminado correctamente");
             } catch (error) {
               console.error(error);
@@ -72,14 +66,16 @@ const ViewAllUsers = ({ navigation }) => {
   const listItemView = (item) => (
     <View key={item.userName} style={styles.listItemView}>
       {item.profilePicture ? (
-        <Image source={{ uri: item.profilePicture }} style={styles.profileImage} />
+        <Image
+          source={{ uri: item.profilePicture }}
+          style={styles.profileImage}
+        />
       ) : null}
 
       <MyText text={item.userName} style={styles.userName} />
       <MyText text="Email de usuario:" style={styles.label} />
       <MyText text={item.email} style={styles.text} />
 
-      {/* Botón Eliminar */}
       <View style={styles.buttonContainer}>
         <Button
           title="Eliminar"

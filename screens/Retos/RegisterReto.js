@@ -1,201 +1,138 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
   Alert,
+  Button,
+  Image,
   KeyboardAvoidingView,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
-import InputText from "../../components/InputText.js";
-import SingleButton from "../../components/SingleButton.js";
+import InputText from "../../components/InputText";
+import SingleButton from "../../components/SingleButton";
+import { addReto, getAllRetos } from "../../database/retoService";
 
 const RegisterReto = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [fechaLimite, setFechaLimite] = useState("");
-  const [puntajeAsignado, setPuntajeAsignado] = useState("");
-  const [estado, setEstado] = useState("Pendiente");
+  const [imagen, setImagen] = useState("");
+  const [puntos, setPuntos] = useState("");
 
-  const clearData = () => {
-    setNombre("");
-    setDescripcion("");
-    setCategoria("");
-    setFechaLimite("");
-    setPuntajeAsignado("");
-    setEstado("Pendiente");
+  const pickFromGallery = async () => {
+    const permisos = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permisos.granted) {
+      Alert.alert("Permisos requeridos", "Habilitá acceso a la galería.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setImagen(result.assets[0].uri);
+    }
   };
 
-  const categorias = [
-    "Papel",
-    "Plastico",
-    "Electronico",
-    "Metal",
-    "Textil",
-    "Orgánico",
-    "Otro",
-  ];
+  const takePhoto = async () => {
+    const permisos = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permisos.granted) {
+      Alert.alert("Permisos requeridos", "Habilitá acceso a la cámara.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setImagen(result.assets[0].uri);
+    }
+  };
 
-  const registerReto = async () => {
-  const nombreTrim = nombre.trim();
-  const descripcionTrim = descripcion.trim();
-  const categoriaTrim = categoria.trim();
-  const fechaLimiteTrim = fechaLimite.trim();
-  const puntajeTrim = puntajeAsignado.trim();
+  const clearFields = () => {
+    setNombre("");
+    setDescripcion("");
+    setImagen("");
+    setPuntos("");
+  };
 
-  if (!nombreTrim) {
-    Alert.alert("Error", "Por favor ingrese el nombre del reto");
-    return;
-  }
+  const guardarReto = async () => {
+    const nombreTrim = nombre.trim();
+    const descripcionTrim = descripcion.trim();
+    const imagenTrim = imagen.trim();
+    const puntosInt = parseInt(puntos.trim());
 
-  if (!descripcionTrim) {
-    Alert.alert("Error", "Por favor ingrese una descripción");
-    return;
-  }
-
-  if (!categoriaTrim) {
-    Alert.alert("Error", "Por favor seleccione una categoría");
-    return;
-  }
-
-  if (!fechaLimiteTrim) {
-    Alert.alert("Error", "Por favor ingrese una fecha límite");
-    return;
-  }
-
-  if (!puntajeTrim) {
-    Alert.alert("Error", "Por favor ingrese un puntaje asignado");
-    return;
-  }
-
-  const puntaje = parseInt(puntajeTrim);
-  if (isNaN(puntaje) || puntaje < 1 || puntaje > 10) {
-    Alert.alert("Error", "El puntaje debe ser un número entre 1 y 10");
-    return;
-  }
-
-  try {
-    const data = await AsyncStorage.getItem("retos");
-    const retos = data ? JSON.parse(data) : [];
-
-    const yaExiste = retos.some(
-      (r) => r.nombre.toLowerCase() === nombreTrim.toLowerCase()
-    );
-
-    if (yaExiste) {
-      Alert.alert("Error", "Ya existe un reto con ese nombre");
+    if (!nombreTrim || !descripcionTrim || !imagenTrim || !puntosInt) {
+      Alert.alert("Error", "Por favor complete todos los campos.");
       return;
     }
 
-    const nuevoReto = {
-      nombre: nombreTrim,
-      descripcion: descripcionTrim,
-      categoria: categoriaTrim,
-      fechaLimite: fechaLimiteTrim,
-      puntajeAsignado: puntaje,
-      estado,
-    };
+    try {
+      const retos = await getAllRetos();
+      const existe = retos.some(
+        (r) => r.nombre.toLowerCase() === nombreTrim.toLowerCase()
+      );
+      if (existe) {
+        Alert.alert("Error", "Ya existe un reto con ese nombre.");
+        return;
+      }
 
-    retos.push(nuevoReto);
-    await AsyncStorage.setItem("retos", JSON.stringify(retos));
+      const nuevoReto = {
+        nombre: nombreTrim,
+        descripcion: descripcionTrim,
+        imagen: imagenTrim,
+        puntos: puntosInt,
+      };
 
-    clearData();
-    Alert.alert("Éxito", "Reto registrado correctamente", [
-      { text: "Confirmar", onPress: () => navigation.goBack() },
-    ]);
-  } catch (error) {
-    console.error("Error al registrar reto:", error);
-    Alert.alert("Error", "No se pudo registrar el reto");
-  }
-};
-
+      await addReto(nuevoReto);
+      Alert.alert("Éxito", "Reto registrado correctamente");
+      clearFields();
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error al registrar reto:", error);
+      Alert.alert("Error", "No se pudo registrar el reto.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView keyboardShouldPersistTaps="handled">
-        <KeyboardAvoidingView behavior="padding" style={styles.container}>
-          <View style={styles.formContainer}>
-            <Text style={styles.title}>Registrar Reto</Text>
+      <ScrollView>
+        <KeyboardAvoidingView style={styles.form}>
+          <InputText
+            placeholder="Nombre del reto"
+            value={nombre}
+            onChangeText={setNombre}
+          />
+          <InputText
+            placeholder="Descripción"
+            value={descripcion}
+            onChangeText={setDescripcion}
+          />
+          <InputText
+            placeholder="Puntos"
+            keyboardType="numeric"
+            value={puntos}
+            onChangeText={setPuntos}
+          />
 
-            <InputText
-              placeholder="Nombre del reto"
-              value={nombre}
-              onChangeText={setNombre}
-              style={styles.input}
-            />
-            <InputText
-              placeholder="Descripción"
-              value={descripcion}
-              onChangeText={setDescripcion}
-              style={styles.input}
-            />
-            <Text style={styles.label}>Selecciona una categoría:</Text>
-            <View style={styles.optionsContainer}>
-              {categorias.map((cat) => (
-                <TouchableOpacity
-                  key={cat}
-                  style={[
-                    styles.optionButton,
-                    categoria === cat && styles.optionSelected,
-                  ]}
-                  onPress={() => setCategoria(cat)}
-                >
-                  <Text
-                    style={
-                      categoria === cat
-                        ? [styles.optionText, styles.optionTextSelected]
-                        : styles.optionText
-                    }
-                  >
-                    {cat}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <InputText
-              placeholder="Fecha Límite (YYYY-MM-DD)"
-              value={fechaLimite}
-              onChangeText={setFechaLimite}
-              style={styles.input}
-            />
-            <InputText
-              placeholder="Puntaje Asignado (1-10)"
-              value={puntajeAsignado}
-              onChangeText={setPuntajeAsignado}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            
-            {/* Selector de Estado */}
-            <Text style={styles.label}>Estado del reto:</Text>
-            <View style={styles.optionsContainer}>
-              {["Pendiente", "Aprobado", "Rechazado"].map((estadoItem) => (
-                <TouchableOpacity
-                  key={estadoItem}
-                  style={[
-                    styles.optionButton,
-                    estado === estadoItem && styles.optionSelected,
-                  ]}
-                  onPress={() => setEstado(estadoItem)}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      estado === estadoItem && styles.optionTextSelected,
-                    ]}
-                  >
-                    {estadoItem}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <SingleButton title="Guardar Reto" customPress={registerReto} />
+          <View style={styles.imagePreview}>
+            {imagen ? (
+              <Image source={{ uri: imagen }} style={styles.image} />
+            ) : (
+              <Text style={styles.placeholder}>
+                Ninguna imagen seleccionada
+              </Text>
+            )}
           </View>
+
+          <View style={styles.buttonRow}>
+            <Button title="Galería" onPress={pickFromGallery} />
+            <View style={{ width: 10 }} />
+            <Button title="Cámara" onPress={takePhoto} />
+          </View>
+
+          <SingleButton title="Guardar Reto" customPress={guardarReto} />
         </KeyboardAvoidingView>
       </ScrollView>
     </SafeAreaView>
@@ -207,46 +144,30 @@ export default RegisterReto;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
   },
-  formContainer: {
+  form: {
     padding: 20,
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  input: {
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  optionsContainer: {
-    flexDirection: "row",
-    marginBottom: 15,
-    flexWrap: "wrap",
-  },
-  optionButton: {
+  imagePreview: {
+    height: 200,
     backgroundColor: "#eee",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    marginRight: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
+    marginVertical: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
   },
-  optionSelected: {
-    backgroundColor: "#4caf50",
-    borderColor: "#388e3c",
+  image: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
   },
-  optionText: {
-    color: "#333",
-    fontWeight: "600",
+  placeholder: {
+    color: "#999",
   },
-  optionTextSelected: {
-    color: "white",
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 20,
   },
 });

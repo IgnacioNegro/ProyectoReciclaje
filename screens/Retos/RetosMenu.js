@@ -1,9 +1,16 @@
-import { SafeAreaView, ScrollView, StyleSheet, View, Text, Pressable } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
 import { Montserrat_400Regular, useFonts } from "@expo-google-fonts/montserrat";
+import { FontAwesome5 } from "@expo/vector-icons";
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import AuthLoading from "../AuthLoading";
 
-const RetosMenu = ({ navigation }) => {
+const RetoMenu = ({ navigation }) => {
   let [fontsLoaded] = useFonts({ Montserrat_400Regular });
 
   if (!fontsLoaded) return <AuthLoading />;
@@ -28,18 +35,43 @@ const RetosMenu = ({ navigation }) => {
           Retos
         </Text>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <MenuButton title="Registrar Reto" icon="plus-circle" onPress={() => navigation.navigate("RegisterReto")} />
-          <MenuButton title="Actualizar Reto" icon="edit" onPress={() => navigation.navigate("UpdateReto")} />
-          <MenuButton title="Ver Reto" icon="eye" onPress={() => navigation.navigate("ViewReto")} />
-          <MenuButton title="Borrar Reto" icon="trash" onPress={() => navigation.navigate("DeleteReto")} />
-          <MenuButton title="Ver todos los Retos" icon="list" onPress={() => navigation.navigate("ViewAllRetos")} />
+          <MenuButton
+            title="Registrar Reto"
+            icon="plus-square"
+            onPress={() => navigation.navigate("RegisterReto")}
+          />
+          <MenuButton
+            title="Actualizar Reto"
+            icon="edit"
+            onPress={() => navigation.navigate("UpdateReto")}
+          />
+          <MenuButton
+            title="Ver Reto"
+            icon="search"
+            onPress={() => navigation.navigate("ViewReto")}
+          />
+          <MenuButton
+            title="Borrar Reto"
+            icon="trash-alt"
+            onPress={() => navigation.navigate("DeleteReto")}
+          />
+          <MenuButton
+            title="Ver todos los Retos"
+            icon="list-ul"
+            onPress={() => navigation.navigate("ViewAllRetos")}
+          />
+          <MenuButton
+            title="Panel de Reto"
+            icon="tasks"
+            onPress={() => navigation.navigate("RetoPanel")}
+          />
         </ScrollView>
       </View>
     </SafeAreaView>
   );
 };
 
-export default RetosMenu;
+export default RetoMenu;
 
 const styles = StyleSheet.create({
   container: {

@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
@@ -14,6 +13,7 @@ import {
 } from "react-native";
 import InputText from "../../components/InputText";
 import SingleButton from "../../components/SingleButton.js";
+import { addUser, getAllUsers } from "../../database/userService";
 
 const RegisterUser = ({ navigation }) => {
   const [userName, setUserName] = useState("");
@@ -72,90 +72,91 @@ const RegisterUser = ({ navigation }) => {
   };
 
   const registerUser = async () => {
-  const userNameTrim = userName.trim();
-  const passwordTrim = password.trim();
-  const emailTrim = email.trim();
-  const nameTrim = name.trim();
-  const ageTrim = age.trim();
-  const neighborhoodTrim = neighborhood.trim();
-  const profilePictureTrim = profilePicture.trim();
+    const userNameTrim = userName.trim();
+    const passwordTrim = password.trim();
+    const emailTrim = email.trim();
+    const nameTrim = name.trim();
+    const ageTrim = parseInt(age.trim());
+    const neighborhoodTrim = neighborhood.trim();
+    const profilePictureTrim = profilePicture.trim();
 
-  if (!userNameTrim) {
-    Alert.alert("Error", "Por favor ingrese un nombre de usuario");
-    return;
-  }
-
-  if (!passwordTrim) {
-    Alert.alert("Error", "Por favor ingrese una contraseña");
-    return;
-  }
-
-  if (!emailTrim || !emailTrim.includes("@")) {
-    Alert.alert("Error", "Por favor ingrese un email válido");
-    return;
-  }
-
-  if (!nameTrim) {
-    Alert.alert("Error", "Por favor ingrese su nombre");
-    return;
-  }
-
-  if (!ageTrim) {
-    Alert.alert("Error", "Por favor ingrese su edad");
-    return;
-  }
-
-  if (!neighborhoodTrim) {
-    Alert.alert("Error", "Por favor ingrese su barrio");
-    return;
-  }
-
-  if (!profilePictureTrim) {
-    Alert.alert("Error", "Por favor seleccione una foto de perfil");
-    return;
-  }
-
-  try {
-    const nuevoUsuario = {
-      userName: userNameTrim,
-      password: passwordTrim,
-      email: emailTrim,
-      name: nameTrim,
-      age: ageTrim,
-      neighborhood: neighborhoodTrim,
-      profilePicture: profilePictureTrim,
-      retosParticipados: [],
-      puntaje: 0,
-    };
-
-    const data = await AsyncStorage.getItem("usuarios");
-    const usuarios = data ? JSON.parse(data) : [];
-
-    const yaExiste = usuarios.some(
-      (usuario) => usuario.userName.toLowerCase() === userNameTrim.toLowerCase()
-    );
-
-    if (yaExiste) {
-      Alert.alert("Error", "Ese nombre de usuario ya está registrado");
+    if (!userNameTrim) {
+      Alert.alert("Error", "Por favor ingrese un nombre de usuario");
       return;
     }
 
-    usuarios.push(nuevoUsuario);
-    await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
+    if (!passwordTrim) {
+      Alert.alert("Error", "Por favor ingrese una contraseña");
+      return;
+    }
 
-    clearData();
-    Alert.alert("Éxito", "Usuario registrado correctamente", [
-      {
-        text: "Confirmar",
-        onPress: () => navigation.navigate("Login"),
-      },
-    ]);
-  } catch (error) {
-    console.error("Error al registrar usuario:", error);
-    Alert.alert("Error", "No se pudo registrar el usuario");
-  }
-};
+    if (!emailTrim || !emailTrim.includes("@")) {
+      Alert.alert("Error", "Por favor ingrese un email válido");
+      return;
+    }
 
+    if (!nameTrim) {
+      Alert.alert("Error", "Por favor ingrese su nombre");
+      return;
+    }
+
+    if (!ageTrim) {
+      Alert.alert("Error", "Por favor ingrese su edad");
+      return;
+    }
+
+    if (!neighborhoodTrim) {
+      Alert.alert("Error", "Por favor ingrese su barrio");
+      return;
+    }
+
+    if (!profilePictureTrim) {
+      Alert.alert("Error", "Por favor seleccione una foto de perfil");
+      return;
+    }
+
+    if (passwordTrim.length < 8) {
+      Alert.alert("Error", "La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+
+    try {
+      const usuarios = await getAllUsers();
+      const yaExiste = usuarios.some(
+        (usuario) =>
+          usuario.userName.toLowerCase() === userNameTrim.toLowerCase()
+      );
+
+      if (yaExiste) {
+        Alert.alert("Error", "Ese nombre de usuario ya está registrado");
+        return;
+      }
+
+      const nuevoUsuario = {
+        userName: userNameTrim,
+        password: passwordTrim,
+        email: emailTrim,
+        name: nameTrim,
+        age: ageTrim,
+        neighborhood: neighborhoodTrim,
+        profilePicture: profilePictureTrim,
+        retosParticipados: JSON.stringify([]),
+        puntaje: 0,
+      };
+
+      await addUser(nuevoUsuario);
+      clearData();
+      Alert.alert("Éxito", "Usuario registrado correctamente", [
+        {
+          text: "Confirmar",
+          onPress: () => navigation.navigate("Login"),
+        },
+      ]);
+    } catch (error) {
+      console.error("Error al registrar usuario:", error);
+      Alert.alert("Error", "No se pudo registrar el usuario");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>

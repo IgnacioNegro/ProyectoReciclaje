@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Alert,
@@ -6,13 +5,18 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  View,
   Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import InputText from "../../components/InputText";
 import MyText from "../../components/MyText";
 import SingleButton from "../../components/SingleButton";
+
+import {
+  deleteUserByUserName,
+  getUserByUserName,
+} from "../../database/userService"; // Ajusta ruta según proyecto
 
 const ViewUser = ({ navigation }) => {
   const [userName, setUserName] = useState("");
@@ -27,12 +31,7 @@ const ViewUser = ({ navigation }) => {
     }
 
     try {
-      const data = await AsyncStorage.getItem("usuarios");
-      const usuarios = data ? JSON.parse(data) : [];
-
-      const usuario = usuarios.find(
-        (u) => u.userName.toLowerCase() === nombreTrim
-      );
+      const usuario = await getUserByUserName(nombreTrim);
 
       if (usuario) {
         setUserData(usuario);
@@ -62,16 +61,7 @@ const ViewUser = ({ navigation }) => {
           style: "destructive",
           onPress: async () => {
             try {
-              const data = await AsyncStorage.getItem("usuarios");
-              let usuarios = data ? JSON.parse(data) : [];
-
-              usuarios = usuarios.filter(
-                (u) =>
-                  u.userName.toLowerCase() !==
-                  userData.userName.toLowerCase()
-              );
-
-              await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
+              await deleteUserByUserName(userData.userName);
 
               Alert.alert("Usuario eliminado correctamente");
               limpiarBusqueda();

@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Alert,
@@ -12,109 +11,99 @@ import InputText from "../../components/InputText.js";
 import MyText from "../../components/MyText.js";
 import SingleButton from "../../components/SingleButton.js";
 
-const UpdateReto = () => {
-  const [nombreBusqueda, setNombreBusqueda] = useState("");
-  const [originalNombre, setOriginalNombre] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [fechaLimite, setFechaLimite] = useState("");
-  const [puntajeAsignado, setPuntajeAsignado] = useState("");
-  const [estado, setEstado] = useState("");
+import {
+  getAllRetos,
+  updateReto as updateRetoInDB,
+} from "../../database/retoService";
 
-  const [retos, setRetos] = useState([]);
+const UpdateReto = () => {
+  const [tituloSearch, setTituloSearch] = useState("");
+  const [originalRetoId, setOriginalRetoId] = useState(null);
+
+  const [titulo, setTitulo] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [imagen, setImagen] = useState("");
 
   const clearForm = () => {
-    setNombreBusqueda("");
-    setOriginalNombre("");
-    setNombre("");
+    setTituloSearch("");
+    setOriginalRetoId(null);
+    setTitulo("");
     setDescripcion("");
-    setCategoria("");
-    setFechaLimite("");
-    setPuntajeAsignado("");
-    setEstado("");
-    setRetos([]);
+    setFechaInicio("");
+    setFechaFin("");
+    setImagen("");
   };
 
   const searchReto = async () => {
-    if (!nombreBusqueda.trim()) {
-      Alert.alert("Error", "Ingrese el nombre del reto para buscar.");
+    if (!tituloSearch.trim()) {
+      Alert.alert("Error", "El título del reto es requerido.");
       return;
     }
-    try {
-      const data = await AsyncStorage.getItem("retos");
-      const retosData = data ? JSON.parse(data) : [];
 
-      const retoEncontrado = retosData.find(
-        (r) => r.nombre.toLowerCase() === nombreBusqueda.trim().toLowerCase()
+    try {
+      const retosData = await getAllRetos();
+
+      const retoFound = retosData.find(
+        (r) => r.titulo.toLowerCase() === tituloSearch.trim().toLowerCase()
       );
 
-      if (!retoEncontrado) {
+      if (!retoFound) {
         Alert.alert("Reto no encontrado");
         clearForm();
         return;
       }
 
-      setOriginalNombre(retoEncontrado.nombre);
-      setNombre(retoEncontrado.nombre);
-      setDescripcion(retoEncontrado.descripcion);
-      setCategoria(retoEncontrado.categoria);
-      setFechaLimite(retoEncontrado.fechaLimite);
-      setPuntajeAsignado(String(retoEncontrado.puntajeAsignado));
-      setEstado(retoEncontrado.estado);
-      setRetos(retosData);
+      setOriginalRetoId(retoFound.id);
+      setTitulo(retoFound.titulo);
+      setDescripcion(retoFound.descripcion);
+      setFechaInicio(retoFound.fechaInicio);
+      setFechaFin(retoFound.fechaFin);
+      setImagen(retoFound.imagen);
     } catch (error) {
       console.error(error);
-      Alert.alert("Error al buscar reto");
+      Alert.alert("Error al buscar el reto");
     }
   };
 
   const updateReto = () => {
     if (
-      !nombre.trim() ||
+      !titulo.trim() ||
       !descripcion.trim() ||
-      !categoria.trim() ||
-      !fechaLimite.trim() ||
-      !puntajeAsignado.trim() ||
-      !estado.trim()
+      !fechaInicio.trim() ||
+      !fechaFin.trim() ||
+      !imagen.trim()
     ) {
       Alert.alert("Error", "Todos los campos son requeridos.");
       return;
     }
 
-    const puntajeNum = parseInt(puntajeAsignado);
-    if (isNaN(puntajeNum) || puntajeNum < 1 || puntajeNum > 10) {
-      Alert.alert("Error", "El puntaje asignado debe estar entre 1 y 10.");
+    if (!originalRetoId) {
+      Alert.alert("Error", "Primero busque un reto para actualizar.");
       return;
     }
 
     Alert.alert(
       "Confirmar actualización",
-      `¿Desea actualizar el reto "${originalNombre}"?`,
+      `¿Desea actualizar el reto "${titulo}"?`,
       [
         { text: "Cancelar", style: "cancel" },
         {
           text: "Actualizar",
           onPress: async () => {
             try {
-              const index = retos.findIndex(
-                (r) => r.nombre.toLowerCase() === originalNombre.toLowerCase()
-              );
-              if (index === -1) {
-                Alert.alert("Error", "Reto no encontrado para actualizar.");
-                return;
-              }
-
-              retos[index] = {
-                nombre,
+              const updatedReto = {
+                id: originalRetoId,
+                titulo,
                 descripcion,
-                categoria,
-                fechaLimite,
-                puntajeAsignado: puntajeNum,
-                estado,
+                fechaInicio,
+                fechaFin,
+                imagen,
               };
 
-              await AsyncStorage.setItem("retos", JSON.stringify(retos));
+              await updateRetoInDB(updatedReto);
+
               Alert.alert("Éxito", "Reto actualizado correctamente.");
               clearForm();
             } catch (error) {
@@ -130,49 +119,51 @@ const UpdateReto = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.viewContainer}>
-        <ScrollView keyboardShouldPersistTaps="handled">
-          <KeyboardAvoidingView behavior="padding" style={{ padding: 20 }}>
-            <MyText text="Buscar Reto" style={styles.text} />
-            <InputText
-              placeholder="Ingrese nombre del reto"
-              style={styles.input}
-              onChangeText={setNombreBusqueda}
-              value={nombreBusqueda}
-            />
-            <SingleButton title="Buscar" customPress={searchReto} />
+        <View style={styles.generalView}>
+          <ScrollView keyboardShouldPersistTaps="handled">
+            <KeyboardAvoidingView behavior="padding" style={{ padding: 20 }}>
+              <MyText text="Buscar Reto" style={styles.text} />
+              <InputText
+                placeholder="Ingrese el título del Reto"
+                style={styles.input}
+                onChangeText={setTituloSearch}
+                value={tituloSearch}
+              />
+              <SingleButton title="Buscar" customPress={searchReto} />
 
-            {/* Muestra inputs solo si encontro el reto */}
-            {originalNombre ? (
-              <>
-                <InputText placeholder="Nombre" value={nombre} onChangeText={setNombre} />
-                <InputText
-                  placeholder="Descripción"
-                  value={descripcion}
-                  onChangeText={setDescripcion}
-                />
-                <InputText
-                  placeholder="Categoría"
-                  value={categoria}
-                  onChangeText={setCategoria}
-                />
-                <InputText
-                  placeholder="Fecha Límite (YYYY-MM-DD)"
-                  value={fechaLimite}
-                  onChangeText={setFechaLimite}
-                />
-                <InputText
-                  placeholder="Puntaje Asignado (1-10)"
-                  keyboardType="numeric"
-                  value={puntajeAsignado}
-                  onChangeText={setPuntajeAsignado}
-                />
-                <InputText placeholder="Estado" value={estado} onChangeText={setEstado} />
-
-                <SingleButton title="Actualizar" customPress={updateReto} />
-              </>
-            ) : null}
-          </KeyboardAvoidingView>
-        </ScrollView>
+              {originalRetoId && (
+                <>
+                  <InputText
+                    placeholder="Título"
+                    value={titulo}
+                    onChangeText={setTitulo}
+                  />
+                  <InputText
+                    placeholder="Descripción"
+                    value={descripcion}
+                    onChangeText={setDescripcion}
+                  />
+                  <InputText
+                    placeholder="Fecha Inicio (YYYY-MM-DD)"
+                    value={fechaInicio}
+                    onChangeText={setFechaInicio}
+                  />
+                  <InputText
+                    placeholder="Fecha Fin (YYYY-MM-DD)"
+                    value={fechaFin}
+                    onChangeText={setFechaFin}
+                  />
+                  <InputText
+                    placeholder="URL de imagen"
+                    value={imagen}
+                    onChangeText={setImagen}
+                  />
+                  <SingleButton title="Actualizar" customPress={updateReto} />
+                </>
+              )}
+            </KeyboardAvoidingView>
+          </ScrollView>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -183,6 +174,7 @@ export default UpdateReto;
 const styles = StyleSheet.create({
   container: { flex: 1 },
   viewContainer: { flex: 1, backgroundColor: "white" },
+  generalView: { flex: 1 },
   text: { padding: 10, marginLeft: 5, color: "black", fontWeight: "bold" },
   input: { marginVertical: 8, paddingHorizontal: 10 },
 });

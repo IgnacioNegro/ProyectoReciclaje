@@ -1,43 +1,43 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  View,
   Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import InputText from "../../components/InputText";
 import MyText from "../../components/MyText";
 import SingleButton from "../../components/SingleButton";
 
+import {
+  deleteRetoByTitulo,
+  getRetoByTitulo,
+} from "../../database/retoService"; // Ajusta la ruta según tu proyecto
+
 const ViewReto = ({ navigation }) => {
-  const [nombre, setNombre] = useState("");
+  const [titulo, setTitulo] = useState("");
   const [retoData, setRetoData] = useState(null);
 
   const getRetoData = async () => {
-    const nombreTrim = nombre.trim().toLowerCase();
+    const tituloTrim = titulo.trim().toLowerCase();
 
-    if (!nombreTrim) {
-      Alert.alert("Error", "Ingrese un nombre válido para buscar.");
+    if (!tituloTrim) {
+      Alert.alert("Error", "Ingrese un título válido para buscar.");
       return;
     }
 
     try {
-      const data = await AsyncStorage.getItem("retos");
-      const retos = data ? JSON.parse(data) : [];
+      const reto = await getRetoByTitulo(tituloTrim);
 
-      const retoEncontrado = retos.find(
-        (r) => r.nombre.toLowerCase() === nombreTrim
-      );
-
-      if (retoEncontrado) {
-        setRetoData(retoEncontrado);
+      if (reto) {
+        setRetoData(reto);
       } else {
-        Alert.alert("Reto no encontrado", `No existe "${nombreTrim}"`);
+        Alert.alert("Reto no encontrado", `No existe el reto "${tituloTrim}"`);
         setRetoData(null);
       }
     } catch (error) {
@@ -47,14 +47,14 @@ const ViewReto = ({ navigation }) => {
   };
 
   const limpiarBusqueda = () => {
-    setNombre("");
+    setTitulo("");
     setRetoData(null);
   };
 
   const eliminarReto = () => {
     Alert.alert(
       "Eliminar reto",
-      `¿Estás segura/o de eliminar "${retoData.nombre}"?`,
+      `¿Estás seguro/a de eliminar el reto "${retoData.titulo}"?`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -62,18 +62,10 @@ const ViewReto = ({ navigation }) => {
           style: "destructive",
           onPress: async () => {
             try {
-              const data = await AsyncStorage.getItem("retos");
-              let retos = data ? JSON.parse(data) : [];
-
-              retos = retos.filter(
-                (r) => r.nombre.toLowerCase() !== retoData.nombre.toLowerCase()
-              );
-
-              await AsyncStorage.setItem("retos", JSON.stringify(retos));
+              await deleteRetoByTitulo(retoData.titulo);
 
               Alert.alert("Reto eliminado correctamente");
               limpiarBusqueda();
-              navigation.navigate("HomeScreen");
             } catch (error) {
               console.error(error);
               Alert.alert("Error al eliminar el reto");
@@ -93,9 +85,9 @@ const ViewReto = ({ navigation }) => {
 
             <InputText
               style={styles.input}
-              placeholder="Ingrese nombre del reto"
-              value={nombre}
-              onChangeText={setNombre}
+              placeholder="Ingrese título del reto"
+              value={titulo}
+              onChangeText={setTitulo}
             />
 
             <View style={styles.buttonGroup}>
@@ -109,8 +101,14 @@ const ViewReto = ({ navigation }) => {
 
             {retoData && (
               <View style={styles.resultContainer}>
+                {retoData.imagen ? (
+                  <Image
+                    source={{ uri: retoData.imagen }}
+                    style={styles.retoImage}
+                  />
+                ) : null}
                 <MyText
-                  text={`Nombre: ${retoData.nombre}`}
+                  text={`Título: ${retoData.titulo}`}
                   style={styles.resultText}
                 />
                 <MyText
@@ -118,15 +116,11 @@ const ViewReto = ({ navigation }) => {
                   style={styles.resultText}
                 />
                 <MyText
-                  text={`Categoría: ${retoData.categoria}`}
+                  text={`Fecha Inicio: ${retoData.fechaInicio}`}
                   style={styles.resultText}
                 />
                 <MyText
-                  text={`Fecha Límite: ${retoData.fechaLimite}`}
-                  style={styles.resultText}
-                />
-                <MyText
-                  text={`Puntaje Asignado: ${retoData.puntajeAsignado}`}
+                  text={`Fecha Fin: ${retoData.fechaFin}`}
                   style={styles.resultText}
                 />
 
@@ -183,10 +177,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  retoImage: {
+    width: 200,
+    height: 120,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
   resultText: {
     fontSize: 18,
     marginBottom: 8,
     color: "#444",
+    textAlign: "center",
   },
   buttonGroup: {
     flexDirection: "row",

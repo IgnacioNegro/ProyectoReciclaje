@@ -10,35 +10,49 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 
+import { getAllParticipation } from "../../database/participationService";
+import { getAllUsers } from "../../database/userService"; // Importa función real para usuarios
 const UserPanel = () => {
   const [usuario, setUsuario] = useState(null);
   const [participaciones, setParticipaciones] = useState([]);
 
-  // Cargar datos del usuario y participaciones
   useEffect(() => {
     const cargarDatos = async () => {
-      const userName = await AsyncStorage.getItem("usuarioLogueado");
-      const usuariosData = await AsyncStorage.getItem("usuarios");
-      const participacionesData = await AsyncStorage.getItem("participaciones");
+      try {
+        const userName = await AsyncStorage.getItem("usuarioLogueado");
+        if (!userName) return;
 
-      const usuarios = usuariosData ? JSON.parse(usuariosData) : [];
-      const todasParticipaciones = participacionesData
-        ? JSON.parse(participacionesData)
-        : [];
+        // Obtener usuarios desde SQLite
+        const usuariosData = await getAllUsers();
 
-      const usuarioEncontrado = usuarios.find((u) => u.userName === userName);
-      const misParticipaciones = todasParticipaciones.filter(
-        (p) => p.usuario === userName
-      );
+        // Buscar usuario
+        const usuarioEncontrado = usuariosData.find(
+          (u) => u.userName === userName
+        );
+        if (!usuarioEncontrado) {
+          setUsuario(null);
+          return;
+        }
+        setUsuario(usuarioEncontrado);
 
-      setUsuario(usuarioEncontrado);
-      setParticipaciones(misParticipaciones);
+        // Obtener participaciones desde SQLite (función debe existir)
+        const todasParticipaciones = await getAllParticipation();
+
+        // Filtrar participaciones del usuario
+        const misParticipaciones = todasParticipaciones.filter(
+          (p) => p.usuario === userName
+        );
+        setParticipaciones(misParticipaciones);
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+      }
     };
 
     cargarDatos();
   }, []);
 
-  // Calcular nivel en base a puntaje
+  // Resto igual...
+
   const calcularNivel = (puntos) => {
     if (puntos >= 600) return "🔴 Experto";
     if (puntos >= 300) return "🔵 Avanzado";
@@ -46,15 +60,14 @@ const UserPanel = () => {
     return "🟢 Principiante";
   };
 
-  // Generar datos para el gráfico
   const generarDatosGrafico = () => {
     const dias = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
     const conteo = [0, 0, 0, 0, 0, 0, 0];
 
     participaciones.forEach((p) => {
-      const dia = new Date(parseInt(p.id)).getDay(); //  obtenemos el día de la semana (0 a 6)
-      const index = dia === 0 ? 6 : dia - 1; // // convertimos: domingo (0) → índice 6, lunes (1) → índice 0, etc.
-      conteo[index]++; // sumamos una participación en ese día
+      const dia = new Date(parseInt(p.id)).getDay();
+      const index = dia === 0 ? 6 : dia - 1;
+      conteo[index]++;
     });
 
     return {
@@ -63,7 +76,6 @@ const UserPanel = () => {
     };
   };
 
-  // Si no cargó el usuario todavía
   if (!usuario) {
     return (
       <SafeAreaView style={styles.container}>
@@ -72,7 +84,6 @@ const UserPanel = () => {
     );
   }
 
-  // Renderizar vista del panel
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -119,11 +130,7 @@ const UserPanel = () => {
             decimalPlaces: 0,
             color: (opacity = 1) => `rgba(30, 215, 96, ${opacity})`,
             labelColor: () => "#fff",
-            propsForDots: {
-              r: "4",
-              strokeWidth: "2",
-              stroke: "#1DB954",
-            },
+            propsForDots: { r: "4", strokeWidth: "2", stroke: "#1DB954" },
           }}
           style={{ borderRadius: 12, marginTop: 10 }}
         />
@@ -135,35 +142,12 @@ const UserPanel = () => {
 export default UserPanel;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#121212",
-  },
-  content: {
-    padding: 20,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 20,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    color: "#ccc",
-    marginBottom: 5,
-  },
-  value: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
+  container: { flex: 1, backgroundColor: "#121212" },
+  content: { padding: 20, alignItems: "center" },
+  title: { fontSize: 24, fontWeight: "bold", color: "#fff", marginBottom: 20 },
+  image: { width: 100, height: 100, borderRadius: 50, marginBottom: 20 },
+  label: { fontSize: 16, color: "#ccc", marginBottom: 5 },
+  value: { color: "#fff", fontWeight: "bold" },
   loadingText: {
     marginTop: 40,
     fontSize: 18,

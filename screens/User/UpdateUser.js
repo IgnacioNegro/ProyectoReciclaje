@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Alert,
@@ -11,10 +10,14 @@ import {
 import InputText from "../../components/InputText.js";
 import MyText from "../../components/MyText.js";
 import SingleButton from "../../components/SingleButton.js";
+import {
+  getAllUsers,
+  updateUser as updateUserInDB,
+} from "../../database/userService";
 
 const UpdateUser = () => {
   const [userNameSearch, setUserNameSearch] = useState("");
-  const [originalUserName, setOriginalUserName] = useState("");
+  const [originalUserId, setOriginalUserId] = useState(null); // guardamos id para update
   const [userName, setUserName] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -22,11 +25,10 @@ const UpdateUser = () => {
   const [profilePicture, setProfilePicture] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [usuarios, setUsuarios] = useState([]);
 
   const clearForm = () => {
     setUserNameSearch("");
-    setOriginalUserName("");
+    setOriginalUserId(null);
     setUserName("");
     setName("");
     setAge("");
@@ -34,7 +36,6 @@ const UpdateUser = () => {
     setProfilePicture("");
     setPassword("");
     setEmail("");
-    setUsuarios([]);
   };
 
   const searchUser = async () => {
@@ -44,8 +45,7 @@ const UpdateUser = () => {
     }
 
     try {
-      const data = await AsyncStorage.getItem("usuarios");
-      const usuariosData = data ? JSON.parse(data) : [];
+      const usuariosData = await getAllUsers();
 
       const userFound = usuariosData.find(
         (u) => u.userName.toLowerCase() === userNameSearch.trim().toLowerCase()
@@ -57,7 +57,7 @@ const UpdateUser = () => {
         return;
       }
 
-      setOriginalUserName(userFound.userName);
+      setOriginalUserId(userFound.id); // guardamos id para actualizar
       setUserName(userFound.userName);
       setName(userFound.name);
       setAge(String(userFound.age));
@@ -65,7 +65,6 @@ const UpdateUser = () => {
       setProfilePicture(userFound.profilePicture);
       setPassword(userFound.password);
       setEmail(userFound.email);
-      setUsuarios(usuariosData);
     } catch (error) {
       console.error(error);
       Alert.alert("Error al buscar usuario");
@@ -92,9 +91,14 @@ const UpdateUser = () => {
       return;
     }
 
+    if (!originalUserId) {
+      Alert.alert("Error", "Primero busque un usuario para actualizar.");
+      return;
+    }
+
     Alert.alert(
       "Confirmar actualización",
-      `¿Desea actualizar el usuario "${originalUserName}"?`,
+      `¿Desea actualizar el usuario "${userName}"?`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -102,6 +106,7 @@ const UpdateUser = () => {
           onPress: async () => {
             try {
               const updatedUser = {
+                id: originalUserId,
                 userName,
                 name,
                 age: ageNum,
@@ -111,17 +116,7 @@ const UpdateUser = () => {
                 email,
               };
 
-              const index = usuarios.findIndex(
-                (u) => u.userName.toLowerCase() === originalUserName.toLowerCase()
-              );
-
-              if (index === -1) {
-                Alert.alert("Error", "Usuario no encontrado para actualizar.");
-                return;
-              }
-
-              usuarios[index] = updatedUser;
-              await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
+              await updateUserInDB(updatedUser);
 
               Alert.alert("Éxito", "Usuario actualizado correctamente.");
               clearForm();
@@ -151,14 +146,18 @@ const UpdateUser = () => {
               <SingleButton title="Buscar" customPress={searchUser} />
 
               {/* Mostrar datos solo si se encontró un usuario */}
-              {originalUserName ? (
+              {originalUserId ? (
                 <>
                   <InputText
                     placeholder="Nombre de Usuario"
                     value={userName}
                     onChangeText={setUserName}
                   />
-                  <InputText placeholder="Nombre Completo" value={name} onChangeText={setName} />
+                  <InputText
+                    placeholder="Nombre Completo"
+                    value={name}
+                    onChangeText={setName}
+                  />
                   <InputText
                     placeholder="Edad"
                     keyboardType="numeric"

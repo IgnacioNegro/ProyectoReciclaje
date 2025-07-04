@@ -2,9 +2,9 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
 // Pantallas
-import AuthLoading from "../screens/AuthLoading"; // Ruta a crear
+import AuthLoading from "../screens/AuthLoading";
 import HomeScreen from "../screens/HomeScreen";
-import Login from "../screens/Login"; // Ruta a crear
+import Login from "../screens/Login";
 
 // Usuarios
 import DeleteUser from "../screens/User/DeleteUser";

@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import InputText from "../components/InputText";
 import SingleButton from "../components/SingleButton";
+import { getAllUsers } from "../database/userService";
 import AuthLoading from "./AuthLoading";
 
 const Login = ({ navigation }) => {
@@ -35,17 +36,16 @@ const Login = ({ navigation }) => {
     }
 
     try {
-      const data = await AsyncStorage.getItem("usuarios");
-      const usuarios = data ? JSON.parse(data) : [];
+      const usuarios = await getAllUsers();
 
-      const usuario = usuarios.find(
+      const encontrado = usuarios.find(
         (u) =>
           u.userName.toLowerCase() === userName.trim().toLowerCase() &&
-          u.password === password.trim()
+          u.password.trim() === password.trim()
       );
 
-      if (usuario) {
-        await AsyncStorage.setItem("usuarioLogueado", usuario.userName);
+      if (encontrado) {
+        await AsyncStorage.setItem("usuarioLogueado", encontrado.userName);
         Alert.alert("Login exitoso", "", [
           { text: "Ok", onPress: () => navigation.navigate("HomeScreen") },
         ]);
