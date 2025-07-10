@@ -13,13 +13,20 @@ import {
 } from "react-native";
 import InputText from "../../components/InputText";
 import SingleButton from "../../components/SingleButton";
-import { addReto, getAllRetos } from "../../database/retoService";
+import db from "../../database/db";
+import {
+  addReto,
+  getAllRetos,
+  initRetoTable,
+} from "../../database/retoService";
 
 const RegisterReto = ({ navigation }) => {
-  const [nombre, setNombre] = useState("");
+  const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [imagen, setImagen] = useState("");
-  const [puntos, setPuntos] = useState("");
+  // Para fechas, opcional
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
 
   const pickFromGallery = async () => {
     const permisos = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -51,41 +58,51 @@ const RegisterReto = ({ navigation }) => {
   };
 
   const clearFields = () => {
-    setNombre("");
+    setTitulo("");
     setDescripcion("");
     setImagen("");
-    setPuntos("");
+    setFechaInicio("");
+    setFechaFin("");
   };
 
-  const guardarReto = async () => {
-    const nombreTrim = nombre.trim();
+  const guardarReto = () => {
+    const tituloTrim = titulo.trim();
     const descripcionTrim = descripcion.trim();
     const imagenTrim = imagen.trim();
-    const puntosInt = parseInt(puntos.trim());
+    const fechaInicioTrim = fechaInicio.trim();
+    const fechaFinTrim = fechaFin.trim();
 
-    if (!nombreTrim || !descripcionTrim || !imagenTrim || !puntosInt) {
+    if (
+      !tituloTrim ||
+      !descripcionTrim ||
+      !imagenTrim ||
+      !fechaInicioTrim ||
+      !fechaFinTrim
+    ) {
       Alert.alert("Error", "Por favor complete todos los campos.");
       return;
     }
 
     try {
-      const retos = await getAllRetos();
+      const retos = getAllRetos(); // función síncrona
       const existe = retos.some(
-        (r) => r.nombre.toLowerCase() === nombreTrim.toLowerCase()
+        (r) => r.titulo && r.titulo.toLowerCase() === tituloTrim.toLowerCase()
       );
+
       if (existe) {
-        Alert.alert("Error", "Ya existe un reto con ese nombre.");
+        Alert.alert("Error", "Ya existe un reto con ese título.");
         return;
       }
 
       const nuevoReto = {
-        nombre: nombreTrim,
+        titulo: tituloTrim,
         descripcion: descripcionTrim,
         imagen: imagenTrim,
-        puntos: puntosInt,
+        fechaInicio: fechaInicioTrim,
+        fechaFin: fechaFinTrim,
       };
 
-      await addReto(nuevoReto);
+      addReto(nuevoReto); // función síncrona
       Alert.alert("Éxito", "Reto registrado correctamente");
       clearFields();
       navigation.goBack();
@@ -95,14 +112,39 @@ const RegisterReto = ({ navigation }) => {
     }
   };
 
+  const resetTable = () => {
+    Alert.alert(
+      "Confirmar reinicio",
+      "¿Querés borrar todos los retos y reiniciar la tabla? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Confirmar",
+          style: "destructive",
+          onPress: () => {
+            try {
+              db.execSync("DROP TABLE IF EXISTS RETOS;");
+              initRetoTable();
+              Alert.alert("Tabla reiniciada correctamente");
+              clearFields();
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error al reiniciar la tabla");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
         <KeyboardAvoidingView style={styles.form}>
           <InputText
-            placeholder="Nombre del reto"
-            value={nombre}
-            onChangeText={setNombre}
+            placeholder="Título del reto"
+            value={titulo}
+            onChangeText={setTitulo}
           />
           <InputText
             placeholder="Descripción"
@@ -110,10 +152,14 @@ const RegisterReto = ({ navigation }) => {
             onChangeText={setDescripcion}
           />
           <InputText
-            placeholder="Puntos"
-            keyboardType="numeric"
-            value={puntos}
-            onChangeText={setPuntos}
+            placeholder="Fecha Inicio (YYYY-MM-DD)"
+            value={fechaInicio}
+            onChangeText={setFechaInicio}
+          />
+          <InputText
+            placeholder="Fecha Fin (YYYY-MM-DD)"
+            value={fechaFin}
+            onChangeText={setFechaFin}
           />
 
           <View style={styles.imagePreview}>
@@ -132,6 +178,13 @@ const RegisterReto = ({ navigation }) => {
             <Button title="Cámara" onPress={takePhoto} />
           </View>
 
+          <View style={{ marginVertical: 10 }}>
+            <Button
+              title="Reiniciar Tabla RETOS"
+              color="red"
+              onPress={resetTable}
+            />
+          </View>
           <SingleButton title="Guardar Reto" customPress={guardarReto} />
         </KeyboardAvoidingView>
       </ScrollView>
@@ -142,13 +195,8 @@ const RegisterReto = ({ navigation }) => {
 export default RegisterReto;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  form: {
-    padding: 20,
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
+  form: { padding: 20 },
   imagePreview: {
     height: 200,
     backgroundColor: "#eee",
@@ -157,14 +205,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 10,
   },
-  image: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 10,
-  },
-  placeholder: {
-    color: "#999",
-  },
+  image: { width: "100%", height: "100%", borderRadius: 10 },
+  placeholder: { color: "#999" },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "center",

@@ -23,6 +23,17 @@ export const addMaterial = (material) => {
   );
 };
 
+export const updateMaterial = (material) => {
+  db.runSync(
+    `UPDATE MATERIALES SET 
+      nombre = ?, 
+      categoria = ?, 
+      imagen = ? 
+    WHERE id = ?;`,
+    [material.nombre, material.categoria, material.imagen, material.id]
+  );
+};
+
 export const getMaterialByNombre = (nombre) => {
   const rows = db.getAllSync(
     "SELECT * FROM MATERIALES WHERE LOWER(nombre) = LOWER(?) LIMIT 1;",

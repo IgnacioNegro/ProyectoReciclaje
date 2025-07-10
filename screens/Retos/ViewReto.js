@@ -23,7 +23,7 @@ const ViewReto = ({ navigation }) => {
   const [titulo, setTitulo] = useState("");
   const [retoData, setRetoData] = useState(null);
 
-  const getRetoData = async () => {
+  const getRetoData = () => {
     const tituloTrim = titulo.trim().toLowerCase();
 
     if (!tituloTrim) {
@@ -32,7 +32,7 @@ const ViewReto = ({ navigation }) => {
     }
 
     try {
-      const reto = await getRetoByTitulo(tituloTrim);
+      const reto = getRetoByTitulo(tituloTrim); // síncrono
 
       if (reto) {
         setRetoData(reto);
@@ -52,6 +52,8 @@ const ViewReto = ({ navigation }) => {
   };
 
   const eliminarReto = () => {
+    if (!retoData) return;
+
     Alert.alert(
       "Eliminar reto",
       `¿Estás seguro/a de eliminar el reto "${retoData.titulo}"?`,
@@ -60,10 +62,9 @@ const ViewReto = ({ navigation }) => {
         {
           text: "Eliminar",
           style: "destructive",
-          onPress: async () => {
+          onPress: () => {
             try {
-              await deleteRetoByTitulo(retoData.titulo);
-
+              deleteRetoByTitulo(retoData.titulo); // síncrono
               Alert.alert("Reto eliminado correctamente");
               limpiarBusqueda();
             } catch (error) {

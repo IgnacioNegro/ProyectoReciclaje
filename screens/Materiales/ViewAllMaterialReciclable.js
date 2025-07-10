@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -11,158 +10,147 @@ import {
 } from "react-native";
 import MyText from "../../components/MyText.js";
 
-const ViewAllMaterialReciclable = ({ navigation }) => {
+import {
+  deleteMaterialByNombre,
+  getAllMateriales,
+} from "../../database/materialService.js";
+
+const ViewAllMateriales = ({ navigation }) => {
   const [materiales, setMateriales] = useState([]);
-  const [imagen, setImagenes] = useState([]);
 
   useEffect(() => {
-    const fetchMateriales = async () => {
-      try {
-        const data = await AsyncStorage.getItem("materiales");
-        const materialesList = data ? JSON.parse(data) : [];
-
-        if (materialesList.length > 0) {
-          setMateriales(materialesList);
-        } else {
-          Alert.alert(
-            "Mensaje",
-            "No hay Materiales Reciclables!!!",
-            [{ text: "OK", onPress: () => navigation.navigate("HomeScreen") }],
-            { cancelable: false }
-          );
-        }
-      } catch (error) {
-        console.error(error);
-        Alert.alert("Error al cargar materiales reciclables!");
-      }
-    };
     fetchMateriales();
   }, []);
 
-  const clearMaterials = () => {
+  const fetchMateriales = async () => {
+    try {
+      const materialesData = await getAllMateriales();
+
+      if (materialesData.length > 0) {
+        setMateriales(materialesData);
+      } else {
+        Alert.alert(
+          "Mensaje",
+          "No hay materiales reciclables",
+          [{ text: "OK", onPress: () => navigation.goBack() }],
+          { cancelable: false }
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error al cargar los materiales reciclables!");
+    }
+  };
+
+  const eliminarMaterial = (nombre) => {
     Alert.alert(
-      "Confirmar",
-      "¿Seguro que quieres borrar todos los materiales reciclables? Esta acción no se puede deshacer.",
+      "Confirmar eliminación",
+      `¿Estás seguro que querés eliminar el material "${nombre}"?`,
       [
         { text: "Cancelar", style: "cancel" },
         {
-          text: "Sí, borrar todo",
+          text: "Eliminar",
+          style: "destructive",
           onPress: async () => {
             try {
-              await AsyncStorage.removeItem("materiales");
-              setMateriales([]); // Limpia la lista en pantalla
-              Alert.alert("Materiales reciclables borrados correctamente");
-              navigation.navigate("HomeScreen");
-            } catch (e) {
-              console.error("Error borrando materiales reciclables:", e);
-              Alert.alert("Error al borrar materiales reciclables");
+              await deleteMaterialByNombre(nombre);
+              await fetchMateriales();
+              Alert.alert("Material eliminado correctamente");
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error al eliminar el material");
             }
           },
-          style: "destructive",
         },
       ]
     );
   };
 
-  const listItemView = (item) => {
-    return (
-      <View key={item.nombre} style={styles.card}>
-        <Image source={{ uri: item.imagen }} style={styles.cardImage} />
+  const listItemView = (item) => (
+    <View key={item.id} style={styles.listItemView}>
+      {item.imagen ? (
+        <Image source={{ uri: item.imagen }} style={styles.materialImage} />
+      ) : null}
 
-        <View style={styles.cardContent}>
-          <MyText
-            text={`Material: ${item.nombre}`}
-            style={styles.cardText}
-          />
-          <MyText
-            text={`Categoría: ${item.categoria}`}
-            style={styles.cardText}
-          />
-        </View>
+      <MyText text={item.nombre} style={styles.titulo} />
+      <MyText text="Descripción:" style={styles.label} />
+      <MyText text={item.descripcion} style={styles.text} />
+
+      <MyText text="Categoría:" style={styles.label} />
+      <MyText text={item.categoria} style={styles.text} />
+
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Eliminar"
+          color="red"
+          onPress={() => eliminarMaterial(item.nombre)}
+        />
       </View>
-    );
-  };
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View>
+      <View style={styles.viewContainer}>
         <FlatList
           contentContainerStyle={{ paddingHorizontal: 20 }}
           data={materiales}
-          keyExtractor={(item) => item.nombre}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => listItemView(item)}
           ListEmptyComponent={
             <MyText
-              text="No hay materiales para mostrar."
-              style={{ textAlign: "center", marginTop: 20 }}
+              text="No hay materiales reciclables para mostrar."
+              style={styles.emptyText}
             />
           }
+          keyboardShouldPersistTaps="handled"
         />
-
-        <View style={styles.listView}>
-          <MyText
-            text="Total de Materiales Reciclables: "
-            style={styles.text}
-          />
-          <MyText text={materiales.length.toString()} style={styles.text} />
-        </View>
-
-        <View style={styles.clearButtonContainer}>
-          <Button
-            title="Borrar todos los materiales reciclables"
-            color="red"
-            onPress={clearMaterials}
-          />
-        </View>
       </View>
     </SafeAreaView>
   );
 };
 
-export default ViewAllMaterialReciclable;
+export default ViewAllMateriales;
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#f9f9f9",
-    marginVertical: 10,
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-
-  cardImage: {
-    width: "100%",
-    height: 200,
-    resizeMode: "cover",
-  },
-
-  cardContent: {
+  container: { flex: 1 },
+  viewContainer: { flex: 1, backgroundColor: "white" },
+  listItemView: {
+    backgroundColor: "white",
+    marginVertical: 5,
     padding: 10,
-  },
-
-  cardText: {
-    fontSize: 16,
-    marginBottom: 5,
-    color: "#333",
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  text: {
-    padding: 5,
-    marginLeft: 10,
-    color: "black",
-    alignContent: "center",
+    borderRadius: 10,
     alignItems: "center",
   },
-  clearButtonContainer: {
-    marginHorizontal: 20,
-    marginVertical: 15,
+  materialImage: {
+    width: 150,
+    height: 100,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  titulo: {
+    fontWeight: "bold",
+    fontSize: 18,
+    color: "black",
+  },
+  label: {
+    fontWeight: "bold",
+    color: "black",
+    marginTop: 5,
+  },
+  text: {
+    marginTop: 2,
+    color: "black",
+    textAlign: "center",
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#444",
+  },
+  buttonContainer: {
+    marginTop: 10,
+    width: "80%",
   },
 });
-

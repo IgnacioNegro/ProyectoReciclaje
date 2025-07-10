@@ -2,11 +2,16 @@
 export const initParticipationTable = () => {
   db.transaction((tx) => {
     tx.executeSql(
-      `CREATE TABLE IF NOT EXISTS participaciones (
+      `CREATE TABLE IF NOT EXISTS PARTICIPACIONES (
          id TEXT PRIMARY KEY,
          usuario TEXT,
          retoId TEXT,
-         fecha INTEGER
+         fecha INTEGER,
+         comentario TEXT,
+         imagenUri TEXT,
+         lat TEXT,
+         lng TEXT,
+         estado TEXT
        );`
     );
   });

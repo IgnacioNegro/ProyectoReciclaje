@@ -60,11 +60,6 @@ const RetoMenu = ({ navigation }) => {
             icon="list-ul"
             onPress={() => navigation.navigate("ViewAllRetos")}
           />
-          <MenuButton
-            title="Panel de Reto"
-            icon="tasks"
-            onPress={() => navigation.navigate("RetoPanel")}
-          />
         </ScrollView>
       </View>
     </SafeAreaView>

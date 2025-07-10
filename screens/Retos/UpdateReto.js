@@ -36,17 +36,18 @@ const UpdateReto = () => {
     setImagen("");
   };
 
-  const searchReto = async () => {
+  const searchReto = () => {
     if (!tituloSearch.trim()) {
       Alert.alert("Error", "El título del reto es requerido.");
       return;
     }
 
     try {
-      const retosData = await getAllRetos();
-
+      const retosData = getAllRetos(); // síncrono
       const retoFound = retosData.find(
-        (r) => r.titulo.toLowerCase() === tituloSearch.trim().toLowerCase()
+        (r) =>
+          typeof r.titulo === "string" &&
+          r.titulo.toLowerCase() === tituloSearch.trim().toLowerCase()
       );
 
       if (!retoFound) {
@@ -91,7 +92,7 @@ const UpdateReto = () => {
         { text: "Cancelar", style: "cancel" },
         {
           text: "Actualizar",
-          onPress: async () => {
+          onPress: () => {
             try {
               const updatedReto = {
                 id: originalRetoId,
@@ -102,7 +103,7 @@ const UpdateReto = () => {
                 imagen,
               };
 
-              await updateRetoInDB(updatedReto);
+              updateRetoInDB(updatedReto); // síncrono
 
               Alert.alert("Éxito", "Reto actualizado correctamente.");
               clearForm();

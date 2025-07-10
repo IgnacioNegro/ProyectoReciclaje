@@ -46,6 +46,12 @@ const Login = ({ navigation }) => {
 
       if (encontrado) {
         await AsyncStorage.setItem("usuarioLogueado", encontrado.userName);
+
+        if (encontrado.userName.toLowerCase() === "superadmin") {
+          await AsyncStorage.setItem("tipoUsuario", "superadmin");
+        } else {
+          await AsyncStorage.setItem("tipoUsuario", "usuario");
+        }
         Alert.alert("Login exitoso", "", [
           { text: "Ok", onPress: () => navigation.navigate("HomeScreen") },
         ]);

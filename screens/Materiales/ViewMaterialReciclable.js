@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Alert,
@@ -7,15 +6,20 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  View,
   Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import InputText from "../../components/InputText";
 import MyText from "../../components/MyText";
 import SingleButton from "../../components/SingleButton";
 
-const ViewMaterialReciclable = ({ navigation }) => {
+import {
+  deleteMaterialByNombre,
+  getMaterialByNombre,
+} from "../../database/materialService"; // Ajusta la ruta
+
+const ViewMaterial = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
   const [materialData, setMaterialData] = useState(null);
 
@@ -23,22 +27,20 @@ const ViewMaterialReciclable = ({ navigation }) => {
     const nombreTrim = nombre.trim().toLowerCase();
 
     if (!nombreTrim) {
-      Alert.alert("Error", "Ingrese un nombre valido para buscar.");
+      Alert.alert("Error", "Ingrese un nombre válido para buscar.");
       return;
     }
 
     try {
-      const data = await AsyncStorage.getItem("materiales");
-      const materiales = data ? JSON.parse(data) : [];
-
-      const material = materiales.find(
-        (mat) => mat.nombre.toLowerCase() === nombreTrim
-      );
+      const material = await getMaterialByNombre(nombreTrim);
 
       if (material) {
         setMaterialData(material);
       } else {
-        Alert.alert("Material no encontrado", `No existe "${nombreTrim}"`);
+        Alert.alert(
+          "Material no encontrado",
+          `No existe el material "${nombreTrim}"`
+        );
         setMaterialData(null);
       }
     } catch (error) {
@@ -52,15 +54,37 @@ const ViewMaterialReciclable = ({ navigation }) => {
     setMaterialData(null);
   };
 
+  const eliminarMaterial = () => {
+    Alert.alert(
+      "Eliminar material",
+      `¿Estás seguro/a de eliminar el material "${materialData.nombre}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteMaterialByNombre(materialData.nombre);
+
+              Alert.alert("Material eliminado correctamente");
+              limpiarBusqueda();
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error al eliminar el material");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.viewContainer}>
         <ScrollView keyboardShouldPersistTaps="handled">
           <KeyboardAvoidingView behavior="padding" style={styles.keyboardView}>
-            <MyText
-              text="Buscar Material Reciclable"
-              style={styles.title}
-            />
+            <MyText text="Buscar Material Reciclable" style={styles.title} />
 
             <InputText
               style={styles.input}
@@ -80,18 +104,28 @@ const ViewMaterialReciclable = ({ navigation }) => {
 
             {materialData && (
               <View style={styles.resultContainer}>
+                {materialData.imagen ? (
+                  <Image
+                    source={{ uri: materialData.imagen }}
+                    style={styles.materialImage}
+                  />
+                ) : null}
                 <MyText
                   text={`Nombre: ${materialData.nombre}`}
+                  style={styles.resultText}
+                />
+                <MyText
+                  text={`Descripción: ${materialData.descripcion}`}
                   style={styles.resultText}
                 />
                 <MyText
                   text={`Categoría: ${materialData.categoria}`}
                   style={styles.resultText}
                 />
-                <Image
-                  source={{ uri: materialData.imagen }}
-                  style={styles.image}
-                  resizeMode="cover"
+
+                <SingleButton
+                  title="Eliminar Material"
+                  customPress={eliminarMaterial}
                 />
               </View>
             )}
@@ -102,7 +136,7 @@ const ViewMaterialReciclable = ({ navigation }) => {
   );
 };
 
-export default ViewMaterialReciclable;
+export default ViewMaterial;
 
 const styles = StyleSheet.create({
   container: {
@@ -142,16 +176,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  materialImage: {
+    width: 200,
+    height: 120,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
   resultText: {
     fontSize: 18,
     marginBottom: 8,
     color: "#444",
-  },
-  image: {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginTop: 10,
+    textAlign: "center",
   },
   buttonGroup: {
     flexDirection: "row",

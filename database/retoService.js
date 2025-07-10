@@ -2,13 +2,14 @@ import db from "./db";
 
 export const initRetoTable = () => {
   db.execSync(`
-    CREATE TABLE IF NOT EXISTS RETOS (
+        CREATE TABLE IF NOT EXISTS  RETOS (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       titulo TEXT,
       descripcion TEXT,
       fechaInicio TEXT,
       fechaFin TEXT,
-      imagen TEXT
+      imagen TEXT,
+      estado TEXT DEFAULT 'pendiente'
     );
   `);
 };
@@ -38,6 +39,20 @@ export const addReto = (reto) => {
   );
 };
 
+export const updateReto = (reto) => {
+  db.runSync(
+    `UPDATE RETOS SET titulo = ?, descripcion = ?, fechaInicio = ?, fechaFin = ?, imagen = ? WHERE id = ?;`,
+    [
+      reto.titulo,
+      reto.descripcion,
+      reto.fechaInicio,
+      reto.fechaFin,
+      reto.imagen,
+      reto.id,
+    ]
+  );
+};
+
 export const getRetoByTitulo = (titulo) => {
   const rows = db.getAllSync(
     "SELECT * FROM RETOS WHERE LOWER(titulo) = LOWER(?) LIMIT 1;",
@@ -48,4 +63,28 @@ export const getRetoByTitulo = (titulo) => {
 
 export const deleteRetoByTitulo = (titulo) => {
   db.runSync("DELETE FROM RETOS WHERE LOWER(titulo) = LOWER(?);", [titulo]);
+};
+
+// ejemplo con SQLite
+
+export const approveReto = (titulo) => {
+  try {
+    db.runSync(
+      `UPDATE RETOS SET estado = 'aprobado' WHERE LOWER(titulo) = LOWER(?);`,
+      [titulo]
+    );
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const rejectReto = (titulo) => {
+  try {
+    db.runSync(
+      `UPDATE RETOS SET estado = 'rechazado' WHERE LOWER(titulo) = LOWER(?);`,
+      [titulo]
+    );
+  } catch (error) {
+    throw error;
+  }
 };

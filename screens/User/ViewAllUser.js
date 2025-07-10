@@ -23,8 +23,13 @@ const ViewAllUsers = ({ navigation }) => {
     try {
       const usuarios = await getAllUsers(); // Trae array de usuarios desde SQLite
 
-      if (usuarios.length > 0) {
-        setUsers(usuarios);
+      // Filtrar para no mostrar superadmin
+      const usuariosFiltrados = usuarios.filter(
+        (usuario) => usuario.tipoUsuario !== "superadmin"
+      );
+
+      if (usuariosFiltrados.length > 0) {
+        setUsers(usuariosFiltrados);
       } else {
         Alert.alert(
           "Mensaje",

@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -10,32 +11,37 @@ import {
 } from "react-native";
 import MyText from "../../components/MyText.js";
 
-import { deleteRetoByTitulo, getAllRetos } from "../../database/retoService.js";
+import {
+  approveReto,
+  deleteRetoByTitulo,
+  getAllRetos,
+  rejectReto,
+} from "../../database/retoService.js";
 
 const ViewAllRetos = ({ navigation }) => {
   const [retos, setRetos] = useState([]);
+  const [tipoUsuario, setTipoUsuario] = useState(null);
 
   useEffect(() => {
     fetchRetos();
+    loadTipoUsuario();
   }, []);
+
+  const loadTipoUsuario = async () => {
+    try {
+      const tipo = await AsyncStorage.getItem("tipoUsuario");
+      setTipoUsuario(tipo);
+    } catch (error) {
+      console.error("Error al cargar tipoUsuario:", error);
+    }
+  };
 
   const fetchRetos = async () => {
     try {
       const retosData = await getAllRetos();
-
-      if (retosData.length > 0) {
-        setRetos(retosData);
-      } else {
-        Alert.alert(
-          "Mensaje",
-          "No hay retos",
-          [{ text: "OK", onPress: () => navigation.goBack() }],
-          { cancelable: false }
-        );
-      }
+      setRetos(retosData);
     } catch (error) {
-      console.error(error);
-      Alert.alert("Error al cargar los retos!");
+      Alert.alert("Error al cargar los retos");
     }
   };
 
@@ -54,13 +60,48 @@ const ViewAllRetos = ({ navigation }) => {
               await fetchRetos();
               Alert.alert("Reto eliminado correctamente");
             } catch (error) {
-              console.error(error);
               Alert.alert("Error al eliminar el reto");
             }
           },
         },
       ]
     );
+  };
+
+  const aprobarRetoHandler = (titulo) => {
+    Alert.alert("Aprobar reto", `¿Desea aprobar el reto "${titulo}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Aprobar",
+        onPress: async () => {
+          try {
+            await approveReto(titulo);
+            Alert.alert("Reto aprobado");
+            await fetchRetos();
+          } catch (error) {
+            Alert.alert("Error al aprobar reto");
+          }
+        },
+      },
+    ]);
+  };
+
+  const rechazarRetoHandler = (titulo) => {
+    Alert.alert("Rechazar reto", `¿Desea rechazar el reto "${titulo}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Rechazar",
+        onPress: async () => {
+          try {
+            await rejectReto(titulo);
+            Alert.alert("Reto rechazado");
+            await fetchRetos();
+          } catch (error) {
+            Alert.alert("Error al rechazar reto");
+          }
+        },
+      },
+    ]);
   };
 
   const listItemView = (item) => (
@@ -79,12 +120,31 @@ const ViewAllRetos = ({ navigation }) => {
       <MyText text="Fecha Fin:" style={styles.label} />
       <MyText text={item.fechaFin} style={styles.text} />
 
+      <MyText text="Estado:" style={styles.label} />
+      <MyText text={item.estado || "pendiente"} style={styles.text} />
+
       <View style={styles.buttonContainer}>
-        <Button
-          title="Eliminar"
-          color="red"
-          onPress={() => eliminarReto(item.titulo)}
-        />
+        {tipoUsuario === "superadmin" && (
+          <>
+            <Button
+              title="Aprobar"
+              color="green"
+              onPress={() => aprobarRetoHandler(item.titulo)}
+            />
+            <View style={{ height: 5 }} />
+            <Button
+              title="Rechazar"
+              color="orange"
+              onPress={() => rechazarRetoHandler(item.titulo)}
+            />
+            <View style={{ height: 5 }} />
+            <Button
+              title="Eliminar"
+              color="red"
+              onPress={() => eliminarReto(item.titulo)}
+            />
+          </>
+        )}
       </View>
     </View>
   );

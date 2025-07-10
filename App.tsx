@@ -8,6 +8,7 @@ export default function App() {
   useEffect(() => {
     initDB();           // crea tabla USUARIOS
     initRetoTable();    // crea tabla RETOS
+   
   }, []);
 
   return (

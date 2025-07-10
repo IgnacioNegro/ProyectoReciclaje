@@ -1,5 +1,5 @@
 import { Montserrat_400Regular, useFonts } from "@expo-google-fonts/montserrat";
-import { FontAwesome5 } from "@expo/vector-icons"; // 👈 necesario para íconos
+import { FontAwesome5 } from "@expo/vector-icons";
 import {
   Pressable,
   SafeAreaView,
@@ -8,14 +8,12 @@ import {
   Text,
   View,
 } from "react-native";
-import AuthLoading from "../AuthLoading.js";
+import AuthLoading from "../AuthLoading";
 
-const MaterialesReciclablesMenu = ({ navigation }) => {
+const MaterialMenu = ({ navigation }) => {
   let [fontsLoaded] = useFonts({ Montserrat_400Regular });
 
-  if (!fontsLoaded) {
-    return <AuthLoading />;
-  }
+  if (!fontsLoaded) return <AuthLoading />;
 
   const MenuButton = ({ title, icon, onPress }) => (
     <Pressable
@@ -49,7 +47,7 @@ const MaterialesReciclablesMenu = ({ navigation }) => {
           />
           <MenuButton
             title="Ver Material"
-            icon="eye"
+            icon="search"
             onPress={() => navigation.navigate("ViewMaterialReciclable")}
           />
           <MenuButton
@@ -58,9 +56,14 @@ const MaterialesReciclablesMenu = ({ navigation }) => {
             onPress={() => navigation.navigate("DeleteMaterialReciclable")}
           />
           <MenuButton
-            title="Ver Todos los Materiales"
-            icon="list"
-            onPress={() => navigation.navigate("ViewAllMaterialReciclable")}
+            title="Ver todos los Materiales"
+            icon="recycle"
+            onPress={() => navigation.navigate("ViewAllMateriales")}
+          />
+          <MenuButton
+            title="Panel de Materiales"
+            icon="boxes"
+            onPress={() => navigation.navigate("MaterialPanel")}
           />
         </ScrollView>
       </View>
@@ -68,7 +71,7 @@ const MaterialesReciclablesMenu = ({ navigation }) => {
   );
 };
 
-export default MaterialesReciclablesMenu;
+export default MaterialMenu;
 
 const styles = StyleSheet.create({
   container: {
@@ -105,6 +108,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 3,
+    elevation: 3,
   },
   buttonPressed: {
     backgroundColor: "rgba(255,255,255,0.1)",

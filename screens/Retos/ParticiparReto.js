@@ -15,6 +15,9 @@ import {
   View,
 } from "react-native";
 
+import { addParticipation } from "../../database/participationService";
+import { getAllRetos } from "../../database/retoService";
+
 const ParticiparReto = ({ navigation }) => {
   const [retosDisponibles, setRetosDisponibles] = useState([]);
   const [retoSeleccionado, setRetoSeleccionado] = useState(null);
@@ -22,19 +25,23 @@ const ParticiparReto = ({ navigation }) => {
   const [imagenUri, setImagenUri] = useState(null);
   const [ubicacion, setUbicacion] = useState(null);
   const [usuario, setUsuario] = useState("");
-  const [estado] = useState("Pendiente"); // Estado fijo para la participación
+  const [estado] = useState("Pendiente");
 
   useEffect(() => {
     const cargarDatos = async () => {
-      const retos = await AsyncStorage.getItem("retos");
       const usuarioLogueado = await AsyncStorage.getItem("usuarioLogueado");
       setUsuario(usuarioLogueado);
 
-      const retosParsed = retos ? JSON.parse(retos) : [];
-      const retosAprobados = retosParsed.filter(
-        (reto) => reto.estado === "Aprobado"
-      );
-      setRetosDisponibles(retosAprobados);
+      try {
+        const retos = await getAllRetos(); // desde SQLite
+        const retosAprobados = retos.filter(
+          (reto) => reto.estado && reto.estado.toLowerCase() === "aprobado"
+        );
+        setRetosDisponibles(retosAprobados);
+      } catch (error) {
+        console.error("Error al cargar retos desde SQLite:", error);
+        Alert.alert("Error", "No se pudieron cargar los retos.");
+      }
     };
     cargarDatos();
   }, []);
@@ -71,37 +78,42 @@ const ParticiparReto = ({ navigation }) => {
       return;
     }
 
-    const nuevaParticipacion = {
+    const reto = retosDisponibles.find((r) => r.nombre === retoSeleccionado);
+
+    if (!reto) {
+      Alert.alert("Error", "No se encontró el reto seleccionado.");
+      return;
+    }
+
+    const participacion = {
       id: Date.now().toString(),
       usuario,
-      reto: retoSeleccionado,
+      retoId: reto.id.toString(),
+      fecha: Date.now(),
       comentario,
       imagenUri,
-      ubicacion,
+      lat: ubicacion.lat,
+      lng: ubicacion.lng,
       estado,
     };
 
-    const data = await AsyncStorage.getItem("participaciones");
-    const participaciones = data ? JSON.parse(data) : [];
-    participaciones.push(nuevaParticipacion);
-    await AsyncStorage.setItem(
-      "participaciones",
-      JSON.stringify(participaciones)
-    );
+    try {
+      await addParticipation(participacion);
+    } catch (error) {
+      console.error("Error al guardar participación en SQLite:", error);
+      Alert.alert("Error", "No se pudo guardar la participación.");
+      return;
+    }
 
-    // ACTUALIZAR PUNTAJE Y RETOS PARTICIPADOS
+    // Actualizar puntaje y retos participados en AsyncStorage
+    const usuariosData = await AsyncStorage.getItem("usuarios");
+    const usuarios = usuariosData ? JSON.parse(usuariosData) : [];
+    const index = usuarios.findIndex((u) => u.userName === usuario);
 
-    const reto = retosDisponibles.find((r) => r.nombre === retoSeleccionado);
-    if (reto) {
-      const usuariosData = await AsyncStorage.getItem("usuarios");
-      const usuarios = usuariosData ? JSON.parse(usuariosData) : [];
-      const index = usuarios.findIndex((u) => u.userName === usuario);
-
-      if (index !== -1) {
-        usuarios[index].puntaje += parseInt(reto.puntajeAsignado);
-        usuarios[index].retosParticipados.push(reto.nombre);
-        await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
-      }
+    if (index !== -1) {
+      usuarios[index].puntaje += parseInt(reto.puntajeAsignado);
+      usuarios[index].retosParticipados.push(reto.nombre);
+      await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
     }
 
     Alert.alert("¡Éxito!", "Participación registrada correctamente", [
@@ -123,20 +135,20 @@ const ParticiparReto = ({ navigation }) => {
           )}
           {retosDisponibles.map((reto) => (
             <TouchableOpacity
-              key={reto.nombre}
+              key={reto.titulo}
               style={[
                 styles.optionButton,
-                retoSeleccionado === reto.nombre && styles.optionSelected,
+                retoSeleccionado === reto.titulo && styles.optionSelected,
               ]}
-              onPress={() => setRetoSeleccionado(reto.nombre)}
+              onPress={() => setRetoSeleccionado(reto.titulo)}
             >
               <Text
                 style={[
                   styles.optionText,
-                  retoSeleccionado === reto.nombre && styles.optionTextSelected,
+                  retoSeleccionado === reto.titulo && styles.optionTextSelected,
                 ]}
               >
-                {reto.nombre}
+                {reto.titulo}
               </Text>
             </TouchableOpacity>
           ))}
